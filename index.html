@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1><span>Corredora Seguros CF</span> <span class="h1-amp">&</span> <span>Alianza Verticales</span></h1>
+  </header>
+  <div class="divider"></div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" id="tab-simulador" onclick="setView('simulador')">Simulador de venta</div>
+    <div class="nav-tab" id="tab-bbdd" onclick="setView('bbdd')">Análisis de BBDD</div>
+    <div class="nav-tab" id="tab-dashboard" onclick="setView('dashboard')">Dashboard</div>
+    <div class="nav-tab" id="tab-guia" onclick="setView('guia')">Guía</div>
+  </div>
+
+  <!-- ═══════════════ SIMULADOR ═══════════════ -->
+  <div id="view-simulador">
+    <div class="nombre-card">
+      <svg class="nombre-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <input type="text" id="nombre-comunidad" placeholder="Nombre de la comunidad..." oninput="updatePitch()">
+    </div>
+
+    <div class="s-label">Parámetros del seguro</div>
+    <div class="inputs-grid">
+      <div class="input-card" style="position:relative;">
+        <div class="input-label">Aseguradora</div>
+        <div style="position:relative;margin-top:6px;">
+          <select id="aseguradora" onchange="onAseguradoraChange()" style="width:100%;background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 36px 8px 10px;font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--text);outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;">
+            <option value="" disabled selected>Seleccionar</option>
+            <option>BCI Seguros</option><option>Continental</option><option>HDI Seguros</option>
+            <option>Mapfre</option><option>Renta Nacional</option><option>Sura</option>
+            <option>Unnio</option><option>Sin aseguradora</option>
+          </select>
+          <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+      </div>
+      <div class="input-card">
+        <div class="input-label">Comisión</div>
+        <input type="range" id="comision" min="10" max="20" step="0.5" value="14" oninput="recalc()">
+        <div class="input-val" id="comision-v">14.0%</div>
+        <div class="com-sug" id="com-sug" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="inputs-grid">
+      <div class="input-card">
+        <div class="input-label">Monto asegurado (UF)</div>
+        <div class="ma-combo">
+          <input type="range" id="ma" min="1000" max="400000" step="1000" value="100000" oninput="syncMaFromSlider()" style="flex:1;">
+          <input type="number" id="ma-text" value="100000" min="1000" max="999999" oninput="syncMaFromText()">
+          <span>UF</span>
+        </div>
+      </div>
+      <div class="input-card">
+        <div class="input-label">Cobertura del seguro</div>
+        <div class="cob-grid">
+          <div class="cob-btn active-is" id="btn-is" onclick="setCob('is')"><div class="cob-name">Incendio y sismo</div><div class="cob-detail">Tasa <span class="tasa-wrap"><input class="tasa-input" id="tasa-is" type="number" value="0.17" min="0.01" max="1" step="0.01" onclick="event.stopPropagation()" oninput="updateTasa()"><span class="tasa-pct">%</span><span class="tasa-arrows"><button onclick="event.stopPropagation();stepTasa('tasa-is',1)">▲</button><button onclick="event.stopPropagation();stepTasa('tasa-is',-1)">▼</button></span></span></div><div class="tasa-range-hint" id="range-is" style="display:none;"></div></div>
+          <div class="cob-btn" id="btn-i" onclick="setCob('i')"><div class="cob-name">Incendio</div><div class="cob-detail">Tasa <span class="tasa-wrap"><input class="tasa-input" id="tasa-i" type="number" value="0.05" min="0.01" max="1" step="0.01" onclick="event.stopPropagation()" oninput="updateTasa()"><span class="tasa-pct">%</span><span class="tasa-arrows"><button onclick="event.stopPropagation();stepTasa('tasa-i',1)">▲</button><button onclick="event.stopPropagation();stepTasa('tasa-i',-1)">▼</button></span></span></div><div class="tasa-range-hint" id="range-i" style="display:none;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- F1: Comparador -->
+    <div style="text-align:right;margin-top:-4px;margin-bottom:10px;">
+      <button class="btn-comparador" id="btn-comparador" onclick="toggleComparador()">Comparar aseguradoras</button>
+    </div>
+    <div id="comparador-wrap" class="comparador-area" style="display:none;">
+      <div class="comp-wrap">
+        <table class="comp-table">
+          <thead><tr><th>Aseguradora</th><th>Tasa</th><th>Comisión</th><th>MRR estimado</th><th>Comisión agente</th></tr></thead>
+          <tbody id="comp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mrr-grid">
+      <div class="mrr-card"><div class="mrr-metric-label">Prima neta</div><div class="mrr-metric-val" id="prima-v">—</div><div class="mrr-metric-sub">MA × tasa</div></div>
+      <div class="mrr-card"><div class="mrr-metric-label">MRR</div><div class="mrr-metric-val" id="mrr-v">—</div><div class="mrr-metric-sub">Prima × comisión ÷ 12</div></div>
+      <div class="mrr-card"><div class="mrr-metric-label">ARR</div><div class="mrr-metric-val" id="mrr-anual-v">—</div><div class="mrr-metric-sub">MRR × 12</div></div>
+    </div>
+
+    <!-- F4: Tamaño en la barra de unidades -->
+    <div class="units-bar">
+      <div class="input-label">Unidades del edificio</div>
+      <input type="range" id="units" min="1" max="1000" step="1" value="100" oninput="syncUnitsFromSlider()" style="flex:1;">
+      <input type="number" id="units-text" value="100" min="1" max="9999" oninput="syncUnitsFromText()" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:var(--text);outline:none;text-align:right;-moz-appearance:textfield;">
+      <span style="font-size:12px;color:var(--muted);">unid.</span>
+      <span class="size-badge" id="size-badge">—</span>
+    </div>
+
+    <div class="s-label">Servicios ya contratados por la Comunidad</div>
+    <div class="productos-row">
+      <div class="prod-toggle" id="tog-saas" onclick="toggleProducto('saas')"><span class="dot"></span> SaaS</div>
+      <div class="prod-toggle" id="tog-cito" onclick="toggleProducto('cito')"><span class="dot"></span> Citofonía</div>
+      <div class="prod-toggle" id="tog-acceso" onclick="toggleProducto('acceso')"><span class="dot"></span> Control de acceso</div>
+    </div>
+    <div class="productos-note" id="prod-note"></div>
+
+    <div class="s-label">Beneficios disponibles — selecciona lo que el administrador quiere</div>
+    <div class="benefits-grid">
+      <div class="b-card saas-u" id="card-saas" onclick="toggle('saas')">
+        <div class="b-check" id="chk-saas"><div class="cm"></div></div>
+        <div class="b-tag tg-saas" id="tag-saas">Disponible</div>
+        <div class="b-name">SaaS</div>
+        <ul class="b-perks pk-g"><li>Software gastos comunes gratis — primeros 12 meses</li><li>Desde mes 13 paga mensualidad</li></ul>
+        <div class="b-cost-line">Costo Seguro Intercompany: <strong>1.20 UF/mes</strong></div>
+      </div>
+      <div class="b-card cito-u" id="card-cito" onclick="toggle('cito')">
+        <div class="b-check" id="chk-cito"><div class="cm"></div></div>
+        <div class="b-tag tg-cito" id="tag-cito">Disponible</div>
+        <div class="b-name">Citofonía</div>
+        <ul class="b-perks pk-b"><li>2 meses gratis de mensualidad</li><li>Celular incluido (lo absorbe Citofonía)</li><li>Desde mes 3 paga mensualidad normal</li></ul>
+        <div class="b-cost-line" id="cost-cito">Costo Seguro Intercompany: <strong>— UF</strong> (3 meses)</div>
+      </div>
+      <div class="b-card acceso-u" id="card-acceso" onclick="toggle('acceso')">
+        <div class="b-check" id="chk-acceso"><div class="cm"></div></div>
+        <div class="b-tag tg-acceso" id="tag-acceso">Disponible</div>
+        <div class="b-name">Control de acceso</div>
+        <ul class="b-perks pk-p"><li>Pack 1 — QR + Apertura Remota</li><li>Mensualidad gratis por 6 meses</li><li>Desde mes 7 paga mensualidad normal</li><li>Instalación: 25 UF (cargo al admin)</li></ul>
+        <div class="b-cost-line">Costo Seguro Intercompany: <strong>2 UF/mes × 6 meses = 12 UF</strong></div>
+      </div>
+    </div>
+
+    <!-- Beneficios gratuitos — chips inline bajo la grilla -->
+    <div class="free-inline-section">
+      <div class="free-inline-label">Incluidos sin costo adicional</div>
+      <div id="free-list" class="free-chips-row">
+        <div class="free-item free-item-auto" id="rc-item" style="display:none;" data-label="Responsabilidad Civil">
+          <div class="free-check checked" style="background:#1a5ac4;border-color:#1a5ac4;"></div>
+          <span class="free-text">Responsabilidad Civil</span>
+          <span class="free-tag" style="background:rgba(26,90,196,.12);color:#1a5ac4;">Auto</span>
+        </div>
+        <div class="free-item" onclick="toggleFree(this)" data-label="asesoría legal"><div class="free-check"></div><span class="free-text">Asesoría legal</span></div>
+        <div class="free-item" onclick="toggleFree(this)" data-label="revisión del plan de seguridad"><div class="free-check"></div><span class="free-text">Revisión plan de seguridad</span></div>
+      </div>
+    </div>
+
+    <!-- Comparador de combinaciones — después de toda la selección de beneficios -->
+    <div style="text-align:right;margin-top:-4px;margin-bottom:10px;">
+      <button class="btn-comparador" id="btn-comp-ben" onclick="toggleComparadorBeneficios()">Comparar combinaciones de beneficios</button>
+    </div>
+    <div id="comp-ben-wrap" style="display:none;margin-bottom:1.25rem;">
+      <div class="comp-wrap">
+        <table class="comp-table" id="comp-ben-table">
+          <thead><tr><th>Combinación</th><th>Costo mes 1</th><th>Remanente mes 2+</th><th>Break-even</th></tr></thead>
+          <tbody id="comp-ben-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- F6: Pitch + Material de apoyo integrados -->
+    <div class="pitch-section" id="pitch-section" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="pitch-label" style="margin-bottom:0;">Pitch para el administrador</div>
+        <button class="copy-btn" id="btn-copy-pitch" onclick="copyPitch()">Copiar</button>
+      </div>
+      <div class="pitch-box" id="pitch-box">—</div>
+      <div id="apoyo-section" class="pitch-apoyo" style="display:none;">
+        <a id="link-cito" class="apoyo-link" href="#" target="_blank" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Presentación Citofonía CF</a>
+        <a id="link-acceso" class="apoyo-link" href="https://heyzine.com/flip-book/178e1a60a7.html#page/1" target="_blank" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Presentación Control de Acceso CF</a>
+      </div>
+    </div>
+
+    <div class="resumen" id="resumen">
+      <div class="res-title">Resumen de la propuesta</div>
+      <div id="resumen-content"><div class="empty">Selecciona al menos un beneficio para ver el resumen</div></div>
+    </div>
+
+    <div id="rent-section" style="display:none;" class="rent-section">
+      <div class="divider" style="margin:2rem 0;"></div>
+      <div class="rent-header"><div class="s-label">Rentabilidad para la corredora</div><div class="rent-sub">Análisis de recuperación de inversión y margen neto</div></div>
+      <div class="rent-metrics">
+        <div class="rent-card rem-card"><div class="rent-card-label">Remanente mensual</div><div class="rent-card-val" id="rem-v">—</div><div class="rent-card-sub" id="rem-sub">Desde mes 2</div></div>
+        <div class="rent-card be-card"><div class="rent-card-label">Break-even</div><div class="rent-card-val" id="be-v">—</div><div class="rent-card-sub" id="be-sub">Meses para recuperar inversión</div></div>
+        <div class="rent-card ltv-card"><div class="rent-card-label" id="ltv-label">Ganancia neta 12 meses</div><div class="rent-card-val" id="ltv-v">—</div><div class="rent-card-sub" id="ltv-sub">Total acumulado al mes 12</div></div>
+      </div>
+      <div class="proj-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div class="proj-title">Ganancia mensual (no acumulada)</div>
+          <div style="display:flex;gap:6px;">
+            <button class="period-btn active-period" id="btn-12" onclick="setPeriod(12)">12 m</button>
+            <button class="period-btn" id="btn-24" onclick="setPeriod(24)">24 m</button>
+            <button class="period-btn" id="btn-36" onclick="setPeriod(36)">36 m</button>
+          </div>
+        </div>
+        <div class="chart-wrap" id="chart-wrap"><canvas id="projChart"></canvas></div>
+        <div class="proj-legend" id="proj-legend"></div>
+      </div>
+      <div class="rent-note" id="rent-note"></div>
+    </div>
+
+    <!-- F5+F10: Acciones PDF -->
+    <div class="pdf-bar">
+      <button class="pdf-btn-el" id="btn-guardar" onclick="saveToHistorial()">Guardar</button>
+      <button class="pdf-btn-el" id="btn-historial" onclick="toggleHistorial()">Ver historial</button>
+<a class="pdf-btn-el primary" onclick="window.print()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar PDF</a>
+    </div>
+
+    <!-- F5: Historial -->
+    <div id="historial-wrap" class="hist-wrap" style="display:none;">
+      <div id="historial-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ANÁLISIS BBDD ═══════════════ -->
+  <div id="view-bbdd" style="display:none;">
+    <div class="bbdd-intro">
+      <div class="s-label">Análisis de BBDD — Comunidad Feliz</div>
+      <p class="bbdd-desc">Valida el modelo: si las comunidades contratan seguro con CF Corredora, el margen del seguro absorbe el costo del SaaS. Carga la BBDD para ver cuántas comunidades cierran positivo y proyectar el ARR neto.</p>
+    </div>
+
+    <div class="cn-dropzone" id="bbdd-dropzone" onclick="document.getElementById('bbdd-file').click()" ondragover="handleBBDDDragOver(event)" ondragleave="handleBBDDDragLeave(event)" ondrop="handleBBDDDrop(event)">
+      <span class="drop-icon" id="bbdd-drop-icon">📂</span>
+      <div class="cn-upload-title" id="bbdd-drop-title">Carga la BBDD de Comunidad Feliz</div>
+      <div class="cn-upload-sub" id="bbdd-drop-sub">CSV o Excel con comunidades, plan SaaS y monto asegurado</div>
+      <!-- Botón carga rápida BBDD CF -->
+      <button id="btn-load-default" onclick="event.stopPropagation();loadDefaultBBDD()" style="margin:10px 0 4px;padding:10px 22px;background:linear-gradient(135deg,#1a5ac4,#7050b8);color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 12px rgba(112,80,184,.35);transition:opacity .15s;">
+        ⚡ Cargar BBDD CF
+      </button>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Proyección MAxlsx · 8.167 comunidades</div>
+      <div class="cn-upload-btn" style="margin-top:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Seleccionar otro archivo</div>
+      <input type="file" id="bbdd-file" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleBBDDFile(event)">
+      <div id="bbdd-file-pill-wrap"></div>
+      <div class="drop-hint" id="bbdd-drop-hint">o arrastra y suelta aquí</div>
+      <div><span class="cn-template" onclick="event.stopPropagation();downloadBBDDTemplate()">Descargar plantilla CSV</span></div>
+    </div>
+
+    <div class="inputs-grid" style="margin-bottom:1.5rem;grid-template-columns:1fr 1fr 1fr 1fr;">
+      <div class="input-card">
+        <div class="input-label">Cobertura por defecto</div>
+        <div class="cob-grid">
+          <div class="cob-btn active-is" id="bbdd-btn-is" onclick="setBBDDcob('is')"><div class="cob-name">Inc.+Sismo</div><div class="cob-detail">Tasa <span class="tasa-wrap"><input class="tasa-input" id="bbdd-tasa-is" type="number" value="0.160" min="0.01" max="1" step="0.01" onclick="event.stopPropagation()" oninput="updateBBDDTasa()"><span class="tasa-pct">%</span><span class="tasa-arrows"><button onclick="event.stopPropagation();stepBBDDTasa('bbdd-tasa-is',1)">▲</button><button onclick="event.stopPropagation();stepBBDDTasa('bbdd-tasa-is',-1)">▼</button></span></span></div></div>
+          <div class="cob-btn" id="bbdd-btn-i" onclick="setBBDDcob('i')"><div class="cob-name">Incendio</div><div class="cob-detail">Tasa <span class="tasa-wrap"><input class="tasa-input" id="bbdd-tasa-i" type="number" value="0.050" min="0.01" max="1" step="0.01" onclick="event.stopPropagation()" oninput="updateBBDDTasa()"><span class="tasa-pct">%</span><span class="tasa-arrows"><button onclick="event.stopPropagation();stepBBDDTasa('bbdd-tasa-i',1)">▲</button><button onclick="event.stopPropagation();stepBBDDTasa('bbdd-tasa-i',-1)">▼</button></span></span></div></div>
+        </div>
+      </div>
+      <div class="input-card">
+        <div class="input-label">Comisión estimada</div>
+        <input type="range" id="bbdd-comision" min="10" max="20" step="0.5" value="15" oninput="updateBBDDComision()">
+        <div class="input-val" id="bbdd-comision-v">15.0%</div>
+      </div>
+      <div class="input-card">
+        <div class="input-label">Precio intercompany SaaS</div>
+        <div class="ma-combo" style="margin-top:10px;">
+          <input type="number" id="bbdd-intercompany" value="1.20" min="0.10" max="10" step="0.10" oninput="updateBBDDIntercompany()" style="width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);outline:none;text-align:right;-moz-appearance:textfield;">
+          <span>UF/mes</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.4;">Para comunidades sin SaaS previo.<br>Si ya tienen SaaS, se usa su precio lista.</div>
+      </div>
+      <div class="input-card">
+        <div class="input-label">Churn estimado</div>
+        <input type="range" id="bbdd-churn" min="0" max="50" step="0.5" value="30" oninput="updateBBDDChurn()">
+        <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px;">
+          <input type="number" id="bbdd-churn-num" value="30" min="0" max="50" step="0.5" oninput="syncBBDDChurnFromText()" class="no-spin" style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);outline:none;text-align:right;">
+          <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);">%</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4;">Comunidades que no renuevan/año.<br>0% = potencial bruto.</div>
+      </div>
+    </div>
+
+    <div id="bbdd-table-section" style="display:none;">
+      <div class="cn-summary" style="grid-template-columns:repeat(5,1fr);">
+        <div class="cn-metric cn-metric-1">
+          <div class="cn-metric-label">MRR seguro potencial</div>
+          <div class="cn-metric-val" id="bbdd-mrr-seg">—</div>
+          <div class="cn-metric-sub">Si todas contratan seguro</div>
+        </div>
+        <div class="cn-metric" style="border-top-color:#7050b8;">
+          <div class="cn-metric-label">ARR seguro potencial</div>
+          <div class="cn-metric-val" id="bbdd-arr-seg">—</div>
+          <div class="cn-metric-sub">MRR × 12 meses</div>
+        </div>
+        <div class="cn-metric cn-metric-2">
+          <div class="cn-metric-label">Costo SaaS intercompany</div>
+          <div class="cn-metric-val" id="bbdd-saas-cost">—</div>
+          <div class="cn-metric-sub">Lo que CF absorbe por SaaS</div>
+        </div>
+        <div class="cn-metric cn-metric-4">
+          <div class="cn-metric-label">Remanente neto mensual</div>
+          <div class="cn-metric-val" id="bbdd-net-rem">—</div>
+          <div class="cn-metric-sub">MRR seguro − costo SaaS</div>
+          <div class="metric-currencies" id="bbdd-net-currencies"></div>
+        </div>
+        <div class="cn-metric" style="border-top-color:#BA7517;">
+          <div class="cn-metric-label">ARR neto proyectado</div>
+          <div class="cn-metric-val" id="bbdd-arr-net">—</div>
+          <div class="cn-metric-sub" id="bbdd-arr-net-sub">Remanente × 12 meses</div>
+          <div class="metric-currencies" id="bbdd-arr-currencies"></div>
+        </div>
+      </div>
+
+      <div class="bbdd-insight" id="bbdd-insight" style="display:none;">
+        <div class="s-label">Análisis de rentabilidad — modelo intercompany SaaS × Corredora</div>
+        <div class="insight-grid" id="insight-grid"></div>
+      </div>
+
+      <!-- Búsqueda + filtros -->
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;">
+        <!-- Search -->
+        <div style="position:relative;max-width:380px;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;color:var(--muted);">🔍</span>
+          <input type="text" id="bbdd-search" placeholder="Buscar por nombre o RUT..." oninput="updateBBDDSearch()"
+            style="width:100%;padding:8px 32px 8px 32px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);font-size:13px;color:var(--fg);outline:none;box-sizing:border-box;">
+          <span id="bbdd-search-clear" onclick="clearBBDDSearch()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:14px;display:none;">✕</span>
+        </div>
+        <!-- Filtros -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Estado</span>
+            <button class="bbdd-estado-btn active-period" data-val="all"      onclick="setBBDDEstadoFilter('all')">Todos</button>
+            <button class="bbdd-estado-btn" data-val="activo"    onclick="setBBDDEstadoFilter('activo')">● Activo</button>
+            <button class="bbdd-estado-btn" data-val="inactivo"  onclick="setBBDDEstadoFilter('inactivo')">● Inactivo</button>
+            <button class="bbdd-estado-btn" data-val="nunca"     onclick="setBBDDEstadoFilter('nunca')">● Nunca</button>
+          </div>
+          <div style="width:1px;height:20px;background:var(--border);"></div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Escenario</span>
+            <button class="bbdd-estado-btn" data-val="caso3" onclick="setBBDDEstadoFilter('caso3')" style="border-color:#0a9e7240;color:#0a9e72;">● Caso 3</button>
+            <button class="bbdd-estado-btn" data-val="caso1" onclick="setBBDDEstadoFilter('caso1')" style="border-color:#1a5ac440;color:#1a5ac4;">● Caso 1</button>
+            <button class="bbdd-estado-btn" data-val="caso2" onclick="setBBDDEstadoFilter('caso2')" style="border-color:#7050b840;color:#7050b8;">● Caso 2</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cn-table-wrap">
+        <table class="cn-table">
+          <thead>
+            <tr>
+              <th>Comunidad</th>
+              <th>RUT</th>
+              <th>Estado seguro</th>
+              <th>Cobertura</th>
+              <th>MA (UF)</th>
+              <th>MRR seguro</th>
+              <th>Precio lista SaaS</th>
+              <th>Precio intercompany</th>
+              <th>Ratio MRR/SaaS</th>
+              <th>Remanente corredora</th>
+              <th>Oportunidad</th>
+              <th>Nota</th>
+            </tr>
+          </thead>
+          <tbody id="bbdd-tbody"></tbody>
+        </table>
+      </div>
+      <div class="rent-note" id="bbdd-nota" style="margin-bottom:1.5rem;"></div>
+      <div class="pdf-bar"><a class="pdf-btn-el primary" onclick="window.print()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar PDF</a></div>
+    </div>
+    <div class="cn-empty" id="bbdd-empty">Carga la BBDD para ver el análisis de conversión</div>
+  </div>
+
+  <!-- ═══════════════ DASHBOARD ═══════════════ -->
+  <div id="view-dashboard" style="display:none;">
+    <div class="bbdd-intro">
+      <div class="s-label">Dashboard — Portfolio Comunidad Feliz</div>
+      <p class="bbdd-desc">Vista ejecutiva del universo de comunidades. Carga la BBDD en el tab <strong>Análisis de BBDD</strong> para activar este panel.</p>
+    </div>
+
+    <div id="bbdd-dashboard-empty" style="text-align:center;padding:4rem 2rem;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:1rem;">📊</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">Sin datos cargados</div>
+      <div style="font-size:13px;">Ve al tab <strong>Análisis de BBDD</strong> y carga el archivo <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;">bbdd_ma_proyectado.csv</code></div>
+    </div>
+
+    <div id="bbdd-dashboard" style="display:none;">
+
+      <!-- 5 hero cards -->
+      <div class="dash-hero-grid">
+        <div class="dash-hero-card">
+          <div class="dash-hero-label">Universo total</div>
+          <div class="dash-hero-val" id="dash-total">—</div>
+          <div class="dash-hero-sub">comunidades en BBDD</div>
+        </div>
+        <div class="dash-hero-card dash-card-green">
+          <div class="dash-hero-label">Con seguro activo</div>
+          <div class="dash-hero-val" id="dash-activo">—</div>
+          <div class="dash-hero-sub" id="dash-activo-pct">clientes hoy</div>
+        </div>
+        <div class="dash-hero-card dash-card-amber">
+          <div class="dash-hero-label">Inactivo — re-activar</div>
+          <div class="dash-hero-val" id="dash-inactivo">—</div>
+          <div class="dash-hero-sub" id="dash-inactivo-pct">ex-clientes</div>
+        </div>
+        <div class="dash-hero-card dash-card-blue">
+          <div class="dash-hero-label">Pipeline sin seguro</div>
+          <div class="dash-hero-val" id="dash-nunca">—</div>
+          <div class="dash-hero-sub" id="dash-nunca-pct">nunca han contratado</div>
+        </div>
+        <div class="dash-hero-card dash-card-purple">
+          <div class="dash-hero-label">Sweet spot 🎯</div>
+          <div class="dash-hero-val" id="dash-sweetspot">—</div>
+          <div class="dash-hero-sub">sin seguro + con SaaS activo</div>
+        </div>
+      </div>
+
+      <!-- Barra de composición -->
+      <div class="dash-bar-section">
+        <div class="dash-bar-label-row">
+          <span class="dash-bar-legend"><span class="dash-dot dot-green"></span>Activo</span>
+          <span class="dash-bar-legend"><span class="dash-dot dot-amber"></span>Inactivo</span>
+          <span class="dash-bar-legend"><span class="dash-dot dot-blue"></span>Sin seguro — con SaaS</span>
+          <span class="dash-bar-legend"><span class="dash-dot dot-muted"></span>Sin seguro — sin SaaS</span>
+        </div>
+        <div class="dash-bar">
+          <div class="dash-bar-seg dash-seg-green" id="dash-seg-activo" title="Activo"></div>
+          <div class="dash-bar-seg dash-seg-amber" id="dash-seg-inactivo" title="Inactivo"></div>
+          <div class="dash-bar-seg dash-seg-blue"  id="dash-seg-sweet" title="Sin seguro + SaaS"></div>
+          <div class="dash-bar-seg dash-seg-muted" id="dash-seg-nosin" title="Sin seguro + sin SaaS"></div>
+        </div>
+        <div class="dash-bar-callout" id="dash-callout"></div>
+      </div>
+
+      <!-- Rentabilidad + ARR Hero + tabla de casos -->
+      <div id="dash-rentabilidad"></div>
+      <div class="dash-arr-hero" id="dash-arr-hero"></div>
+      <div id="dash-casos"></div>
+
+      <div class="pdf-bar" style="margin-top:2rem;">
+        <a class="pdf-btn-el primary" onclick="window.print()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GUÍA ── -->
+  <div id="view-guia" style="display:none;padding:2rem 0 4rem;">
+
+    <div class="bbdd-intro">
+      <div class="s-label">Guía de referencia</div>
+      <p class="bbdd-desc">Todo lo que necesitas saber para leer los números de este simulador, explicado sin tecnicismos.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ SIMULADOR -->
+    <div style="margin-bottom:2rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <span style="font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;background:#1a5ac418;color:#1a5ac4;text-transform:uppercase;letter-spacing:.08em;">Simulador de venta</span>
+        <div style="flex:1;height:1px;background:var(--border,#e8e8e8);"></div>
+      </div>
+
+      <div style="display:grid;gap:10px;">
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #1a5ac4;">
+          <div style="font-size:13px;font-weight:700;color:var(--fg);margin-bottom:4px;">¿Qué hace el Simulador?</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.6;">Calcula cuánto gana la Corredora CF por intermediar un seguro de incendio para una comunidad. Metes los datos del edificio → te muestra la comisión mensual (MRR) y anual (ARR).</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#1a5ac4;margin-bottom:3px;">Monto Asegurado (MA)</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">El valor total de la edificación que se asegura, en UF. A mayor MA → mayor prima → mayor comisión. Un edificio de 10.000 UF asegurado paga una prima diferente a uno de 50.000 UF.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#1a5ac4;margin-bottom:3px;">Cobertura IS vs I</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;"><strong style="color:var(--fg);">IS</strong> = Incendio + Sismo (más amplio, tasa más alta). <strong style="color:var(--fg);">I</strong> = solo Incendio (más barato). La mayoría de los edificios en Chile van con IS porque el riesgo sísmico es real.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#1a5ac4;margin-bottom:3px;">Tasa de prima</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">El porcentaje que cobra la aseguradora sobre el MA. Ej: tasa 0.16% sobre 10.000 UF = 16 UF de prima anual. Cada aseguradora tiene su propia tasa — las sugeridas ya están cargadas en el selector.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#1a5ac4;margin-bottom:3px;">Comisión Corredora</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">El porcentaje de la prima que se queda CF Seguros por gestionar la póliza. Ej: 15% de 16 UF = 2.4 UF/año → 0.2 UF/mes. Eso es el MRR de esa comunidad.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#1a5ac4;margin-bottom:3px;">Comisión Agente (mes 1)</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">El pago al vendedor que cerró el trato. Se paga <em>una sola vez</em> en el primer mes. Fórmula: (MRR ÷ 10) × 4.5. Desde el mes 2 en adelante ese costo desaparece y el remanente sube.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#1a5ac4;margin-bottom:3px;">Remanente neto</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">Lo que le queda al holding después de todos los costos: <span style="font-family:monospace;background:var(--surface2,#f4f4f4);padding:1px 5px;border-radius:4px;">Prima comisión − SaaS intercompany (− agente mes 1)</span>. Si es positivo, la operación genera caja.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ LOS 3 CASOS -->
+    <div style="margin-bottom:2rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <span style="font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;background:#7050b818;color:#7050b8;text-transform:uppercase;letter-spacing:.08em;">Los 3 Casos — Dashboard</span>
+        <div style="flex:1;height:1px;background:var(--border,#e8e8e8);"></div>
+      </div>
+
+      <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #7050b8;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;color:var(--fg);margin-bottom:4px;">¿Por qué 3 casos?</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">CF tiene comunidades en tres situaciones distintas frente al seguro. Cada una requiere una estrategia de venta diferente y genera un ingreso diferente para el holding. Los 3 casos juntos representan el <em>potencial incremental total</em>.</div>
+      </div>
+
+      <div style="display:grid;gap:10px;">
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #0a9e72;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+            <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px;background:#0a9e7218;color:#0a9e72;">Caso 3</span>
+            <div style="font-size:12px;font-weight:700;color:var(--fg);">Con SaaS & Con seguro — la base que ya existe</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">La comunidad ya usa CF SaaS <em>y</em> ya tiene seguro activo con la Corredora CF. Son los clientes actuales. Su ARR no es "incremental" — ya está generando hoy. Se muestran como referencia del tamaño del negocio base.</div>
+          <div style="margin-top:8px;font-size:11px;background:#0a9e7210;border-radius:7px;padding:7px 10px;color:#0a9e72;font-weight:600;">Estrategia: retención. Que no se vayan.</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #1a5ac4;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+            <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px;background:#1a5ac418;color:#1a5ac4;">Caso 1</span>
+            <div style="font-size:12px;font-weight:700;color:var(--fg);">Con SaaS & Sin seguro — el upsell más fácil</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">La comunidad ya usa CF SaaS pero <em>no</em> tiene seguro con la Corredora CF. La relación ya existe — el administrador ya conoce CF, ya paga la suscripción. Solo hay que agregarle el seguro encima. El CAC (costo de adquisición) es bajísimo.</div>
+          <div style="margin-top:8px;font-size:11px;background:#1a5ac410;border-radius:7px;padding:7px 10px;color:#1a5ac4;font-weight:600;">Estrategia: upsell desde el panel CF SaaS. Un click.</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #7050b8;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+            <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px;background:#7050b818;color:#7050b8;">Caso 2</span>
+            <div style="font-size:12px;font-weight:700;color:var(--fg);">Sin SaaS & Sin seguro — el bundle</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">La comunidad <em>no</em> usa CF SaaS y <em>no</em> tiene seguro. Es la mayor oportunidad en volumen pero requiere más trabajo: hay que vender dos productos. El seguro puede ser la puerta de entrada al SaaS. Genera ARR en <strong style="color:var(--fg);">dos fuentes</strong>: Corredora + SaaS nuevo.</div>
+          <div style="margin-top:8px;font-size:11px;background:#7050b810;border-radius:7px;padding:7px 10px;color:#7050b8;font-weight:600;">Estrategia: bundle — "seguro + plataforma" como oferta única.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ MÉTRICAS -->
+    <div style="margin-bottom:2rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <span style="font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;background:#0a9e7218;color:#0a9e72;text-transform:uppercase;letter-spacing:.08em;">Métricas clave</span>
+        <div style="flex:1;height:1px;background:var(--border,#e8e8e8);"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">MRR — Monthly Recurring Revenue</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">Lo que entra cada mes de forma recurrente. Para la Corredora es la comisión mensual de cada póliza activa. Para el SaaS es la suscripción mensual.</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">ARR — Annual Recurring Revenue</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">MRR × 12. Es el ingreso anualizado proyectado. Permite comparar oportunidades de distintos tamaños en la misma unidad. <em>El número que le importa a los inversionistas.</em></div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">Churn (30% por defecto)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">El porcentaje de clientes que se van al año. Si logras 100 comunidades nuevas, asumimos que 30 cancelan antes de cumplir el año. ARR neto = ARR bruto × (1 − 30%) = 70% del potencial bruto. Cambiar este % en los parámetros del dashboard ajusta toda la proyección.</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">SaaS intercompany (1.20 UF/mes)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">Lo que le cobra CF SaaS a CF Seguros por usar la plataforma para gestionar las comunidades. Es un costo interno del holding — sale de un bolsillo y entra al otro. Afecta el remanente neto de la Corredora.</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">Remanente neto (netGain)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">La ganancia real de la Corredora por comunidad: <span style="font-family:monospace;background:var(--surface2,#f4f4f4);padding:1px 5px;border-radius:4px;">Comisión prima − SaaS intercompany</span>. Si es positivo, el seguro paga más de lo que cuesta el SaaS → operación rentable para el holding.</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">Total holding</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">ARR Corredora + ARR SaaS nuevos. La suma de lo que genera <em>todo</em> el grupo CF con cada caso. En el Caso 2 hay dos fuentes; en los Casos 1 y 3 solo hay una (Corredora).</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">UF (Unidad de Fomento)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">Unidad de cuenta chilena indexada al IPC. El simulador usa <strong style="color:var(--fg);">1 UF = $36.000 CLP</strong> y <strong style="color:var(--fg);">1 USD = $900 CLP</strong> como referencia de conversión para mostrar los valores en pesos.</div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+          <div style="font-size:12px;font-weight:700;color:#0a9e72;margin-bottom:3px;">Diferencial (x veces)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;">Cuántas veces el MRR de la Corredora cubre el costo del SaaS intercompany. Ej: 2.5x significa que la comisión del seguro es 2.5 veces lo que se le paga al SaaS — la Corredora "financia" el SaaS con holgura. Verde = rentable, rojo = pérdida.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ BBDD -->
+    <div style="margin-bottom:2rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <span style="font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;background:#f5a62318;color:#c87800;text-transform:uppercase;letter-spacing:.08em;">Análisis de BBDD</span>
+        <div style="flex:1;height:1px;background:var(--border,#e8e8e8);"></div>
+      </div>
+
+      <div style="display:grid;gap:10px;">
+
+        <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #f5a623;">
+          <div style="font-size:13px;font-weight:700;color:var(--fg);margin-bottom:4px;">¿Qué es la BBDD?</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.6;">Es la base de datos de todas las comunidades que usa CF SaaS (o que están en el pipeline). Cada fila es una comunidad con su monto asegurado proyectado, estado actual frente al seguro, y precio SaaS. El archivo base es <strong style="color:var(--fg);">Proyección MA.xlsx</strong> — se carga automáticamente al abrir el simulador.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#c87800;margin-bottom:3px;">Estado del seguro</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;"><span style="color:#0a9e72;font-weight:700;">● Activo</span> = tiene póliza vigente hoy. <span style="color:#d97706;font-weight:700;">● Inactivo</span> = tuvo pero canceló. <span style="color:#6b7280;font-weight:700;">● Nunca</span> = nunca ha contratado con la Corredora CF.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#c87800;margin-bottom:3px;">Filtros de escenario</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">Los botones "Caso 3 / Caso 1 / Caso 2" en la barra de filtros muestran exactamente las comunidades que componen cada escenario del Dashboard. Útil para exportar o revisar la lista manualmente.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#c87800;margin-bottom:3px;">Precio lista SaaS</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">Lo que paga actualmente la comunidad por el SaaS CF. Si ya tiene SaaS, ese valor se usa como costo intercompany real. Si no tiene SaaS, se usa el default (1.20 UF/mes) como proxy del valor que debería cobrarle.</div>
+          </div>
+
+          <div style="background:var(--surface);border-radius:12px;padding:1rem 1.2rem;">
+            <div style="font-size:12px;font-weight:700;color:#c87800;margin-bottom:3px;">Comisión ajustable</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.55;">El slider de comisión en la parte superior del Análisis de BBDD aplica el mismo % a toda la tabla al mismo tiempo. Cambiar este valor recalcula el MRR, remanente y ARR de las ~8.000 comunidades instantáneamente.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ FÓRMULAS -->
+    <div style="margin-bottom:2rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <span style="font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;background:#e5e7eb;color:#374151;text-transform:uppercase;letter-spacing:.08em;">Fórmulas de referencia</span>
+        <div style="flex:1;height:1px;background:var(--border,#e8e8e8);"></div>
+      </div>
+
+      <div style="background:var(--surface);border-radius:12px;padding:1.2rem 1.4rem;">
+        <div style="display:grid;gap:8px;font-size:12px;">
+          <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border,#e8e8e8);">
+            <span style="font-family:monospace;font-weight:700;color:var(--fg);min-width:200px;flex-shrink:0;">Prima anual (UF)</span>
+            <span style="color:var(--muted);">= MA × tasa ÷ 100</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border,#e8e8e8);">
+            <span style="font-family:monospace;font-weight:700;color:var(--fg);min-width:200px;flex-shrink:0;">MRR Corredora (UF/mes)</span>
+            <span style="color:var(--muted);">= Prima anual × comisión% ÷ 12</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border,#e8e8e8);">
+            <span style="font-family:monospace;font-weight:700;color:var(--fg);min-width:200px;flex-shrink:0;">Comisión agente (mes 1)</span>
+            <span style="color:var(--muted);">= (MRR ÷ 10) × 4.5 &nbsp;·&nbsp; solo se cobra una vez</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border,#e8e8e8);">
+            <span style="font-family:monospace;font-weight:700;color:var(--fg);min-width:200px;flex-shrink:0;">Remanente neto (UF/mes)</span>
+            <span style="color:var(--muted);">= MRR Corredora − SaaS intercompany</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border,#e8e8e8);">
+            <span style="font-family:monospace;font-weight:700;color:var(--fg);min-width:200px;flex-shrink:0;">ARR Corredora (UF/año)</span>
+            <span style="color:var(--muted);">= Σ Remanentes × 12 × (1 − churn)</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border,#e8e8e8);">
+            <span style="font-family:monospace;font-weight:700;color:var(--fg);min-width:200px;flex-shrink:0;">ARR SaaS nuevos (UF/año)</span>
+            <span style="color:var(--muted);">= n comunidades × precio lista × 12 × (1 − churn) &nbsp;·&nbsp; solo Caso 2</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;">
+            <span style="font-family:monospace;font-weight:700;color:#7050b8;min-width:200px;flex-shrink:0;">Total holding (UF/año)</span>
+            <span style="color:var(--muted);">= ARR Corredora + ARR SaaS nuevos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- ── FIN GUÍA ── -->
+
+  <footer>Corredora Seguros CF & Alianza Verticales · Documento interno</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="bbdd_data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
