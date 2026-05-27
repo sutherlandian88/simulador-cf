@@ -19,7 +19,8 @@ const TASAS={
 };
 const SAAS_MES=1.20,ACCESO_MES=2.0,ACCESO_MESES=6;
 const TRAMOS=[{u:50,s:.7952},{u:100,s:1.5904},{u:150,s:2.3857},{u:200,s:2.8628},{u:250,s:3.1491},{u:300,s:3.464},{u:350,s:3.8104},{u:400,s:4.1914},{u:450,s:4.6105},{u:500,s:5.0716},{u:550,s:5.5788},{u:600,s:6.1366},{u:650,s:6.7503},{u:700,s:7.4253},{u:750,s:8.1679},{u:800,s:8.9846},{u:850,s:9.8831},{u:900,s:10.8714},{u:950,s:11.9586},{u:1000,s:13.1544}];
-function getTramo(u){let t=TRAMOS[0];for(let i=0;i<TRAMOS.length;i++){if(u>=TRAMOS[i].u)t=TRAMOS[i];}return t;}
+function getTramo(u){u=Math.min(u,TRAMOS[TRAMOS.length-1].u);let t=TRAMOS[0];for(let i=0;i<TRAMOS.length;i++){if(u>=TRAMOS[i].u)t=TRAMOS[i];}return t;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 let cob='is',projPeriod=12,projChart=null,mrr=0,costoCitoMes=0,costoCito3m=0;
 let tiene={saas:false,cito:false,acceso:false};
@@ -199,6 +200,10 @@ function copyPitch(){
     const btn=document.getElementById('btn-copy-pitch');
     btn.textContent='✓ Copiado';
     setTimeout(()=>{btn.textContent='Copiar';},1500);
+  }).catch(()=>{
+    const btn=document.getElementById('btn-copy-pitch');
+    btn.textContent='Error — copia manual';
+    setTimeout(()=>{btn.textContent='Copiar';},2500);
   });
 }
 
@@ -276,7 +281,7 @@ function saveCNNoteEl(ta,key){
 
 // ── Cards ──
 function renderCards(){
-  const canCito=mrr>=costoCitoMes,canAcceso=mrr>=ACCESO_MES;
+  const canCito=costoCitoMes>0&&mrr>=costoCitoMes,canAcceso=mrr>0&&mrr>=ACCESO_MES;
   const saasCard=document.getElementById('card-saas'),saasTag=document.getElementById('tag-saas');
   if(tiene.saas){saasCard.className='b-card locked';sel.saas=false;saasTag.className='b-tag tg-lock';saasTag.textContent='Ya tiene SaaS';}
   else if(mrr>=SAAS_MES){saasCard.className='b-card saas-u unlocked'+(sel.saas?' sel':'');saasTag.className='b-tag tg-saas';saasTag.textContent='Disponible';}
@@ -336,8 +341,11 @@ function renderRentabilidad(){
   }
   let breakEvenMes=null,acum=0;
   for(let i=0;i<dataMes.length;i++){acum+=dataMes[i];if(acum>=0&&breakEvenMes===null)breakEvenMes=i+1;}
-  const costoSaasMes=(sel.saas&&!tiene.saas)?SAAS_MES:0;
-  const remEstable=mrr-costoSaasMes;
+  let costoMes2=0;
+  if(sel.saas&&!tiene.saas)costoMes2+=SAAS_MES;
+  if(sel.cito)costoMes2+=costoCitoMes;
+  if(sel.acceso&&!tiene.acceso)costoMes2+=ACCESO_MES;
+  const remEstable=mrr-costoMes2;
   document.getElementById('rem-v').textContent=(remEstable>=0?'+':'')+remEstable.toFixed(2)+' UF/mes';
   document.getElementById('rem-v').style.color=remEstable>=0?'#0a9e72':'#d63228';
   document.getElementById('rem-sub').textContent='Remanente estable (mes 2+)';
@@ -476,6 +484,7 @@ function parseBBDDCSV(text){
 function parseBBDDExcel(buffer){
   if(typeof XLSX==='undefined'){alert('Librería Excel no cargada.');return;}
   const wb=XLSX.read(buffer,{type:'array'});
+  if(!wb.SheetNames||wb.SheetNames.length===0){console.warn('Excel sin hojas');bbddComunidades=[];renderBBDD();return;}
   const sheetName=wb.SheetNames.find(n=>/bbdd|comunidad/i.test(n))||wb.SheetNames[0];
   const ws=wb.Sheets[sheetName];
   const rows=XLSX.utils.sheet_to_json(ws,{header:1}),data=[];
@@ -698,6 +707,7 @@ function renderDashboard(allRows){
   };
   const casosEl=document.getElementById('dash-casos');
   if(!casosEl)return;
+  _dashSelectedCasos.clear();
   casosEl.innerHTML=`
     <div style="margin-top:1.5rem;">
       <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
@@ -762,8 +772,9 @@ function selectDashCaso(id){
   const PERFILES={'caso3':'Con SaaS & Con seguro','caso1':'Con SaaS & Sin seguro','caso2':'Sin SaaS & Sin seguro'};
   const churnPct=(bbddChurn*100).toFixed(0)+'%';
   const order=['caso3','caso1','caso2'];
+  if(!window._dashCasos){det.innerHTML='';return;}
   let totalComs=0,totalArrCorr=0,totalArrSaas=0;
-  const selRows=order.filter(c=>_dashSelectedCasos.has(c)).map(c=>{
+  const selRows=order.filter(c=>_dashSelectedCasos.has(c)&&window._dashCasos[c]).map(c=>{
     const d=window._dashCasos[c];
     totalComs+=d.rows.length;totalArrCorr+=d.arrCorr;totalArrSaas+=d.arrSaas||0;
     return{id:c,d,color:COLORS[c],label:LABELS[c],perfil:PERFILES[c]};
@@ -928,8 +939,8 @@ function renderBBDD(){
     const noteVal=(notes[c.noteKey]||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
     const nk=c.noteKey.replace(/'/g,"\\'");
     html+=`<tr>
-      <td>${c.nombre}</td>
-      <td style="font-size:11px;color:var(--muted);">${c.rut||'—'}</td>
+      <td>${esc(c.nombre)}</td>
+      <td style="font-size:11px;color:var(--muted);">${esc(c.rut||'—')}</td>
       <td><span class="estado-badge estado-${c.estadoSeguro||'nunca'}">${c.estadoSeguro||'nunca'}</span></td>
       <td><span class="cn-badge ${c.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${c.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>
       <td>${c.ma>0?c.ma.toLocaleString('es-CL')+' UF':'—'}</td>
