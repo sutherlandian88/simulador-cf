@@ -61,7 +61,7 @@ function applyTasas(aseg){
     if(t.isMin!==t.isMax){hintIS.textContent=fmt(t.isMin)+' – '+fmt(t.isMax);hintIS.style.display='block';}
     else hintIS.style.display='none';
   }
-  if(hintI)hintI.style.display='none';
+  if(hintI){hintI.textContent=fmt(t.i);hintI.style.display='block';}
 }
 function onAseguradoraChange(){
   const val=document.getElementById('aseguradora').value,sug=document.getElementById('com-sug');
@@ -289,6 +289,7 @@ function renderCards(){
   const ccCard=document.getElementById('card-cito'),ccTag=document.getElementById('tag-cito');
   document.getElementById('cost-cito').innerHTML='Costo Seguro Intercompany: <strong>'+costoCito3m.toFixed(2)+' UF</strong> (3 meses)';
   if(tiene.cito){ccCard.className='b-card locked';sel.cito=false;ccTag.className='b-tag tg-lock';ccTag.textContent='Ya tiene Citofonía CF';}
+  else if(!tiene.saas&&!sel.saas){ccCard.className='b-card locked';sel.cito=false;ccTag.className='b-tag tg-lock';ccTag.textContent='Requiere SaaS CF primero';}
   else if(canCito){ccCard.className='b-card cito-u unlocked'+(sel.cito?' sel':'');ccTag.className='b-tag tg-cito';ccTag.textContent='Disponible';}
   else{ccCard.className='b-card locked';sel.cito=false;ccTag.className='b-tag tg-lock';ccTag.textContent='Necesitas +'+(costoCitoMes-mrr).toFixed(2)+' UF/mes';}
   const acCard=document.getElementById('card-acceso'),acTag=document.getElementById('tag-acceso');
@@ -313,13 +314,13 @@ function renderResumen(){
   else if(remEstable<0.5){semClass='sem-yellow';dotClass='sem-dot-yellow';semMsg='Margen ajustado — considera revisar';}
   else{semClass='sem-green';dotClass='sem-dot-green';semMsg='Operación rentable para la corredora';}
   content.innerHTML=
-    `<div class="semaforo ${semClass}"><div class="sem-dot ${dotClass}"></div><div class="sem-text">${semMsg}</div><div class="sem-val" style="color:${remEstable>=0?'#0a9e72':'#d63228'}">${(remEstable>=0?'+':'')}${remEstable.toFixed(2)} UF/mes</div></div>`+
-    `<div class="res-row"><span>MRR generado</span><span class="val">${mrr.toFixed(2)} UF/mes</span></div>`+
-    `<div class="res-row"><span>Comisión agente <span class="tag-once">Solo mes 1</span></span><span class="val red">−${comAgente.toFixed(2)} UF</span></div>`+
-    costoDetalle.map(d=>`<div class="res-row"><span>${d.label}</span><span class="val red">−${d.val.toFixed(2)} UF/mes</span></div>`).join('')+
-    `<div class="res-row"><span>Costo total beneficios</span><span class="val red">−${costoTotal.toFixed(2)} UF/mes</span></div>`+
-    `<div class="res-row"><span><strong>Remanente neto (mes 1)</strong></span><span class="val ${remMes1>=0?'green':'red'}">${(remMes1>=0?'+':'')}${remMes1.toFixed(2)} UF</span></div>`+
-    `<div class="res-row"><span><strong>Remanente neto (mes 2+)</strong></span><span class="val ${remEstable>=0?'green':'red'}">${(remEstable>=0?'+':'')}${remEstable.toFixed(2)} UF/mes</span></div>`;
+    `<div class="semaforo ${semClass}"><div class="sem-dot ${dotClass}"></div><div class="sem-text">${semMsg}</div><div class="sem-val" style="color:${remEstable>=0?'#0a9e72':'#d63228'}">${(remEstable>=0?'+':'')}${fmtUF(remEstable)} UF/mes</div></div>`+
+    `<div class="res-row"><span>MRR generado</span><span class="val">${fmtUF(mrr)} UF/mes</span></div>`+
+    `<div class="res-row"><span>Comisión agente <span class="tag-once">Solo mes 1</span></span><span class="val red">−${fmtUF(comAgente)} UF</span></div>`+
+    costoDetalle.map(d=>`<div class="res-row"><span>${d.label}</span><span class="val red">−${fmtUF(d.val)} UF/mes</span></div>`).join('')+
+    `<div class="res-row"><span>Costo total beneficios</span><span class="val red">−${fmtUF(costoTotal)} UF/mes</span></div>`+
+    `<div class="res-row"><span><strong>Remanente neto (mes 1)</strong></span><span class="val ${remMes1>=0?'green':'red'}">${(remMes1>=0?'+':'')}${fmtUF(remMes1)} UF</span></div>`+
+    `<div class="res-row"><span><strong>Remanente neto (mes 2+)</strong></span><span class="val ${remEstable>=0?'green':'red'}">${(remEstable>=0?'+':'')}${fmtUF(remEstable)} UF/mes</span></div>`;
   renderRentabilidad();
 }
 
@@ -346,22 +347,22 @@ function renderRentabilidad(){
   if(sel.cito)costoMes2+=costoCitoMes;
   if(sel.acceso&&!tiene.acceso)costoMes2+=ACCESO_MES;
   const remEstable=mrr-costoMes2;
-  document.getElementById('rem-v').textContent=(remEstable>=0?'+':'')+remEstable.toFixed(2)+' UF/mes';
+  document.getElementById('rem-v').textContent=(remEstable>=0?'+':'')+fmtUF(remEstable)+' UF/mes';
   document.getElementById('rem-v').style.color=remEstable>=0?'#0a9e72':'#d63228';
   document.getElementById('rem-sub').textContent='Remanente estable (mes 2+)';
   if(breakEvenMes){document.getElementById('be-v').textContent='Mes '+breakEvenMes;document.getElementById('be-v').style.color='#1a5ac4';document.getElementById('be-sub').textContent=breakEvenMes===1?'Rentable desde el primer mes':'Recupera inversión en mes '+breakEvenMes;}
   else{document.getElementById('be-v').textContent='>'+projPeriod+'m';document.getElementById('be-v').style.color='#d63228';document.getElementById('be-sub').textContent='No se recupera en el período';}
   const totalPeriodo=dataMes.reduce((a,b)=>a+b,0);
-  document.getElementById('ltv-v').textContent=(totalPeriodo>=0?'+':'')+totalPeriodo.toFixed(2)+' UF';
+  document.getElementById('ltv-v').textContent=(totalPeriodo>=0?'+':'')+fmtUF(totalPeriodo)+' UF';
   document.getElementById('ltv-v').style.color=totalPeriodo>=0?'#0a9e72':'#d63228';
   document.getElementById('ltv-label').textContent='Ganancia neta '+projPeriod+' meses';
   document.getElementById('ltv-sub').textContent='Total acumulado al mes '+projPeriod;
   const noteParts=[];
-  noteParts.push('Comisión al agente de <strong>'+comAgente.toFixed(2)+' UF</strong> descontada en el mes 1.');
-  if(sel.cito)noteParts.push('Citofonía absorbe <strong>'+costoCito3m.toFixed(2)+' UF</strong> en los primeros 3 meses.');
-  if(sel.saas&&!tiene.saas)noteParts.push('SaaS cuesta <strong>1.20 UF/mes</strong> los primeros 12 meses.');
+  noteParts.push('Comisión al agente de <strong>'+fmtUF(comAgente)+' UF</strong> descontada en el mes 1.');
+  if(sel.cito)noteParts.push('Citofonía absorbe <strong>'+fmtUF(costoCito3m)+' UF</strong> en los primeros 3 meses.');
+  if(sel.saas&&!tiene.saas)noteParts.push('SaaS cuesta <strong>1,20 UF/mes</strong> los primeros 12 meses.');
   if(sel.acceso&&!tiene.acceso)noteParts.push('Control de Acceso cuesta <strong>2 UF/mes por 6 meses</strong>; desde mes 7 paga el admin.');
-  if(remEstable>0)noteParts.push('Desde el mes 2, la corredora retiene <strong>'+remEstable.toFixed(2)+' UF/mes</strong> netos.');
+  if(remEstable>0)noteParts.push('Desde el mes 2, la corredora retiene <strong>'+fmtUF(remEstable)+' UF/mes</strong> netos.');
   document.getElementById('rent-note').innerHTML=noteParts.join(' ');
   const colors=dataMes.map(v=>v>=0?'rgba(10,158,114,0.75)':'rgba(214,50,40,0.75)');
   const borderColors=dataMes.map(v=>v>=0?'#0a9e72':'#d63228');
@@ -418,9 +419,9 @@ function recalc(){
   document.getElementById('comision-v').textContent=(com*100).toFixed(1)+'%';
   const tasa=cob==='is'?tasaIS:tasaI,prima=ma*tasa;
   mrr=prima*com/12;
-  document.getElementById('prima-v').textContent=prima.toFixed(2)+' UF';
-  document.getElementById('mrr-v').textContent=mrr.toFixed(2)+' UF/mes';
-  document.getElementById('mrr-anual-v').textContent=(mrr*12).toFixed(2)+' UF/año';
+  document.getElementById('prima-v').textContent=fmtUF(prima)+' UF';
+  document.getElementById('mrr-v').textContent=fmtUF(mrr)+' UF/mes';
+  document.getElementById('mrr-anual-v').textContent=fmtUF(mrr*12)+' UF/año';
   const tramo=getTramo(units);costoCito3m=tramo.s;costoCitoMes=costoCito3m/3;
   const aseg=document.getElementById('aseguradora').value;
   document.getElementById('rc-item').style.display=(aseg==='BCI Seguros'||aseg==='Mapfre')?'flex':'none';
@@ -438,6 +439,7 @@ let bbddComunidades=[],bbddCob='is',bbddTasaIS=0.00160,bbddTasaI=0.00050,bbddDef
 const UF_CLP=36000,USD_CLP=900;
 function fmtCLP(uf){return'$'+Math.round(uf*UF_CLP).toLocaleString('es-CL')+' CLP';}
 function fmtUSD(uf){return'US$ '+Math.round(uf*UF_CLP/USD_CLP).toLocaleString('en-US');}
+function fmtUF(v,dec=2){return v.toLocaleString('es-CL',{minimumFractionDigits:dec,maximumFractionDigits:dec});}
 function handleBBDDFile(e){const f=e.target.files[0];if(!f)return;processBBDDFile(f);}
 function handleBBDDDragOver(e){e.preventDefault();e.stopPropagation();document.getElementById('bbdd-dropzone').classList.add('drag-over');document.getElementById('bbdd-drop-icon').textContent='📥';}
 function handleBBDDDragLeave(e){e.preventDefault();e.stopPropagation();document.getElementById('bbdd-dropzone').classList.remove('drag-over');document.getElementById('bbdd-drop-icon').textContent=bbddComunidades.length?'✅':'📂';}
@@ -670,19 +672,19 @@ function renderDashboard(allRows){
     </div>
     <div class="dash-arr-breakdown">
       <div class="dash-arr-line">
-        <span class="dash-arr-line-label">Clientes SaaS sin seguro activo (upsell target)</span>
-        <span class="dash-arr-line-val" style="color:#1a5ac4;">${nUpsell.toLocaleString('es-CL')} de ${nConSaaS.toLocaleString('es-CL')} (${pctUpsell}%)</span>
+        <span class="dash-arr-line-label">Comunidades CF con SaaS activo</span>
+        <span class="dash-arr-line-val" style="color:#1a5ac4;">${nConSaaS.toLocaleString('es-CL')} en total</span>
       </div>
       <div class="dash-arr-line">
-        <span class="dash-arr-line-label">MRR prima bruta si cierran todas</span>
-        <span class="dash-arr-line-val">${mrrUpsellBruto.toFixed(0)} UF/mes</span>
+        <span class="dash-arr-line-label">De ellas, <strong>sin seguro</strong> → oportunidad de upsell directo (ya son clientes, la relación existe)</span>
+        <span class="dash-arr-line-val" style="color:#1a5ac4;">${nUpsell.toLocaleString('es-CL')} <span style="font-weight:400;font-size:11px;">(${pctUpsell}% del total SaaS)</span></span>
       </div>
       <div class="dash-arr-line">
-        <span class="dash-arr-line-label">MRR neto (prima − costo SaaS intercompany)</span>
-        <span class="dash-arr-line-val">${netUpsell.toFixed(0)} UF/mes</span>
+        <span class="dash-arr-line-label">Prima bruta si todas contratan seguro</span>
+        <span class="dash-arr-line-val">${Math.round(mrrUpsellBruto).toLocaleString('es-CL')} UF/mes</span>
       </div>
       <div class="dash-arr-line">
-        <span class="dash-arr-line-label">× 12 meses, con churn ${churnPctLabel} · revenue SaaS: sin cambios ✓</span>
+        <span class="dash-arr-line-label">Neto holding (prima − SaaS intercompany) × 12 meses · churn ${churnPctLabel}</span>
         <span class="dash-arr-line-val" style="color:#7050b8;font-size:15px;">${Math.round(arrUpsell).toLocaleString('es-CL')} UF/año</span>
       </div>
     </div>`;
@@ -719,9 +721,9 @@ function renderDashboard(allRows){
       </div>
       <!-- 3 tarjetas -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-        ${_casosCard('caso3','Caso 3','#0a9e72','Con SaaS & Con seguro','Base actual · ya generando',caso3Rows.length,arrCaso3,'UF/año','—')}
         ${_casosCard('caso1','Caso 1','#1a5ac4','Con SaaS & Sin seguro','Upsell — relación ya existe',caso1Rows.length,arrCaso1,'+UF/año','—')}
         ${_casosCard('caso2','Caso 2','#7050b8','Sin SaaS & Sin seguro','Bundle — seguro abre la puerta',caso2Rows.length,arrCaso2Corr+arrCaso2Saas,'+UF/año','Corredora + SaaS')}
+        ${_casosCard('caso3','Caso 3','#0a9e72','Con SaaS & Con seguro','Base actual · ya generando',caso3Rows.length,arrCaso3,'UF/año','—')}
       </div>
       <!-- panel de detalle (se rellena al seleccionar) -->
       <div id="dash-caso-detail" style="margin-top:12px;"></div>
@@ -874,18 +876,18 @@ function renderBBDD(){
   const churnPct=(bbddChurn*100).toFixed(1);
 
   // ── Métricas resumen ──
-  document.getElementById('bbdd-mrr-seg').textContent=totalSeg.toFixed(2)+' UF/mes';
-  document.getElementById('bbdd-arr-seg').textContent=arrSeg.toFixed(2)+' UF/año';
-  document.getElementById('bbdd-saas-cost').textContent=totalSaaS.toFixed(2)+' UF/mes';
+  document.getElementById('bbdd-mrr-seg').textContent=fmtUF(totalSeg)+' UF/mes';
+  document.getElementById('bbdd-arr-seg').textContent=fmtUF(arrSeg)+' UF/año';
+  document.getElementById('bbdd-saas-cost').textContent=fmtUF(totalSaaS)+' UF/mes';
 
   const netEl=document.getElementById('bbdd-net-rem');
-  netEl.textContent=(totalNet>=0?'+':'')+totalNet.toFixed(2)+' UF/mes';
+  netEl.textContent=(totalNet>=0?'+':'')+fmtUF(totalNet)+' UF/mes';
   netEl.style.color=totalNet>=0?'#0a9e72':'#d63228';
   const netCurr=document.getElementById('bbdd-net-currencies');
   if(netCurr)netCurr.innerHTML=`<span class="metric-currency-tag">${fmtCLP(totalNet)}/mes</span><span class="metric-currency-tag">${fmtUSD(totalNet)}/mes</span>`;
 
   const arrEl=document.getElementById('bbdd-arr-net');
-  arrEl.textContent=(arrNetChurn>=0?'+':'')+arrNetChurn.toFixed(2)+' UF/año';
+  arrEl.textContent=(arrNetChurn>=0?'+':'')+fmtUF(arrNetChurn)+' UF/año';
   arrEl.style.color=arrNetChurn>=0?'#0a9e72':'#d63228';
   const arrCurr=document.getElementById('bbdd-arr-currencies');
   if(arrCurr)arrCurr.innerHTML=`<span class="metric-currency-tag">${fmtCLP(arrNetChurn)}/año</span><span class="metric-currency-tag">${fmtUSD(arrNetChurn)}/año</span>`;
@@ -944,11 +946,11 @@ function renderBBDD(){
       <td><span class="estado-badge estado-${c.estadoSeguro||'nunca'}">${c.estadoSeguro||'nunca'}</span></td>
       <td><span class="cn-badge ${c.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${c.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>
       <td>${c.ma>0?c.ma.toLocaleString('es-CL')+' UF':'—'}</td>
-      <td style="color:#1a5ac4;font-weight:500;">${c.mrrSeg>0?c.mrrSeg.toFixed(2)+' UF/mes':'—'}</td>
-      <td style="color:var(--muted);">${c.precioLista>0?c.precioLista.toFixed(2)+' UF/mes':'—'}</td>
-      <td style="color:#d63228;">−${c.saasCost.toFixed(2)} UF/mes <span style="font-size:9px;color:var(--muted);">${c.tieneSaas?'(= lista)':'(sin SaaS)'}</span></td>
+      <td style="color:#1a5ac4;font-weight:500;">${c.mrrSeg>0?fmtUF(c.mrrSeg)+' UF/mes':'—'}</td>
+      <td style="color:var(--muted);">${c.precioLista>0?fmtUF(c.precioLista)+' UF/mes':'—'}</td>
+      <td style="color:#d63228;">−${fmtUF(c.saasCost)} UF/mes <span style="font-size:9px;color:var(--muted);">${c.tieneSaas?'(= lista)':'(sin SaaS)'}</span></td>
       <td style="color:${difColor};font-weight:500;">${c.diferencial.toFixed(2)}x</td>
-      <td style="font-weight:500;color:${c.netGain>=0?'#0a9e72':'#d63228'};">${(c.netGain>=0?'+':'')+c.netGain.toFixed(2)} UF/mes</td>
+      <td style="font-weight:500;color:${c.netGain>=0?'#0a9e72':'#d63228'};">${(c.netGain>=0?'+':'')+fmtUF(c.netGain)} UF/mes</td>
       <td><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;background:${sc}18;color:${sc}">${sl}</span></td>
       <td><div class="cn-note-cell"><span class="cn-note-preview${noteVal?'':' empty'}" onclick="toggleCNNote(this,'${nk}')">${noteVal||'+'}</span><textarea class="cn-note-input" style="display:none;" onblur="saveCNNoteEl(this,'${nk}')" rows="2">${noteVal}</textarea></div></td>
     </tr>`;
@@ -957,17 +959,17 @@ function renderBBDD(){
   html+=`<tr style="background:var(--surface2);">
     <td colspan="4"><strong>TOTAL — ${rows.length} comunidades${filterLabel}</strong></td>
     <td></td>
-    <td style="color:#1a5ac4;font-weight:700;">${totalSeg.toFixed(2)} UF/mes</td>
+    <td style="color:#1a5ac4;font-weight:700;">${fmtUF(totalSeg)} UF/mes</td>
     <td></td>
-    <td style="color:#d63228;font-weight:700;">−${totalSaaS.toFixed(2)} UF/mes</td>
+    <td style="color:#d63228;font-weight:700;">−${fmtUF(totalSaaS)} UF/mes</td>
     <td style="color:${avgDif>=2?'#0a9e72':avgDif>=1?'#BA7517':'#d63228'};font-weight:700;">${avgDif.toFixed(2)}x <span style="font-size:10px;font-weight:400;color:var(--muted);">prom.</span></td>
-    <td style="color:${totalNet>=0?'#0a9e72':'#d63228'};font-weight:700;">${(totalNet>=0?'+':'')+totalNet.toFixed(2)} UF/mes</td>
+    <td style="color:${totalNet>=0?'#0a9e72':'#d63228'};font-weight:700;">${(totalNet>=0?'+':'')+fmtUF(totalNet)} UF/mes</td>
     <td></td><td></td>
   </tr>`;
   document.getElementById('bbdd-tbody').innerHTML=html;
 
   const pct=totalSeg>0?Math.round((totalSaaS/totalSeg)*100):0;
-  document.getElementById('bbdd-nota').innerHTML=`El SaaS representa el <strong>${pct}%</strong> del MRR de seguros — el modelo <strong style="color:${totalNet>=0?'#0a9e72':'#d63228'}">${totalNet>=0?'cierra positivo':'no cierra aún'}</strong>. Remanente mensual: <strong style="color:${totalNet>=0?'#0a9e72':'#d63228'}">${(totalNet>=0?'+':'')+totalNet.toFixed(2)} UF/mes</strong> · ARR neto con churn ${churnPct}%: <strong style="color:${arrNetChurn>=0?'#0a9e72':'#d63228'}">${(arrNetChurn>=0?'+':'')+arrNetChurn.toFixed(2)} UF/año</strong> · <strong>${fmtCLP(arrNetChurn)}/año</strong> · <strong>${fmtUSD(arrNetChurn)}/año</strong>.`;
+  document.getElementById('bbdd-nota').innerHTML=`El SaaS representa el <strong>${pct}%</strong> del MRR de seguros — el modelo <strong style="color:${totalNet>=0?'#0a9e72':'#d63228'}">${totalNet>=0?'cierra positivo':'no cierra aún'}</strong>. Remanente mensual: <strong style="color:${totalNet>=0?'#0a9e72':'#d63228'}">${(totalNet>=0?'+':'')+fmtUF(totalNet)} UF/mes</strong> · ARR neto con churn ${churnPct}%: <strong style="color:${arrNetChurn>=0?'#0a9e72':'#d63228'}">${(arrNetChurn>=0?'+':'')+fmtUF(arrNetChurn)} UF/año</strong> · <strong>${fmtCLP(arrNetChurn)}/año</strong> · <strong>${fmtUSD(arrNetChurn)}/año</strong>.`;
 }
 
 recalc();
