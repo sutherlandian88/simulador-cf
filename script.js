@@ -17,7 +17,7 @@ const TASAS={
   'Unnio':          {i:0.060,isMin:0.130,isMax:0.200},
   'Continental':    {i:0.060,isMin:0.140,isMax:0.170},
 };
-const SAAS_MES=1.20,ACCESO_MES=2.0,ACCESO_MESES=6;
+const SAAS_MES=1.20,ACCESO_INST=25,ACCESO_MESES=6,ACCESO_MES=ACCESO_INST/ACCESO_MESES; // CF paga instalación 25 UF en 6 cuotas ≈ 4,17 UF/mes
 const TRAMOS=[{u:50,s:.7952},{u:100,s:1.5904},{u:150,s:2.3857},{u:200,s:2.8628},{u:250,s:3.1491},{u:300,s:3.464},{u:350,s:3.8104},{u:400,s:4.1914},{u:450,s:4.6105},{u:500,s:5.0716},{u:550,s:5.5788},{u:600,s:6.1366},{u:650,s:6.7503},{u:700,s:7.4253},{u:750,s:8.1679},{u:800,s:8.9846},{u:850,s:9.8831},{u:900,s:10.8714},{u:950,s:11.9586},{u:1000,s:13.1544}];
 function getTramo(u){u=Math.min(u,TRAMOS[TRAMOS.length-1].u);let t=TRAMOS[0];for(let i=0;i<TRAMOS.length;i++){if(u>=TRAMOS[i].u)t=TRAMOS[i];}return t;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -361,7 +361,7 @@ function renderRentabilidad(){
   noteParts.push('Comisión al agente de <strong>'+fmtUF(comAgente)+' UF</strong> descontada en el mes 1.');
   if(sel.cito)noteParts.push('Citofonía absorbe <strong>'+fmtUF(costoCito3m)+' UF</strong> en los primeros 3 meses.');
   if(sel.saas&&!tiene.saas)noteParts.push('SaaS cuesta <strong>1,20 UF/mes</strong> los primeros 12 meses.');
-  if(sel.acceso&&!tiene.acceso)noteParts.push('Control de Acceso cuesta <strong>2 UF/mes por 6 meses</strong>; desde mes 7 paga el admin.');
+  if(sel.acceso&&!tiene.acceso)noteParts.push('CF absorbe instalación Control de Acceso: <strong>25 UF en 6 cuotas</strong> (≈4,17 UF/mes × 6 meses). Admin paga 2 UF/mes desde el inicio.');
   if(remEstable>0)noteParts.push('Desde el mes 2, la corredora retiene <strong>'+fmtUF(remEstable)+' UF/mes</strong> netos.');
   document.getElementById('rent-note').innerHTML=noteParts.join(' ');
   const colors=dataMes.map(v=>v>=0?'rgba(10,158,114,0.75)':'rgba(214,50,40,0.75)');
@@ -388,7 +388,7 @@ function updatePitch(){
   const parts=[];
   if(sel.saas)parts.push('SaaS de gestión de gastos comunes gratis por 12 meses');
   if(sel.cito)parts.push('Citofonía CF con 2 meses gratis y celular incluido');
-  if(sel.acceso)parts.push('Control de Acceso Pack 1 (QR + Apertura Remota) gratis por 6 meses');
+  if(sel.acceso)parts.push('Control de Acceso Pack 1 (QR + Apertura Remota) — CF paga la instalación (25 UF), tú solo pagas 2 UF/mes');
   document.querySelectorAll('#free-list .free-item').forEach(item=>{
     const chk=item.querySelector('.free-check');
     if(chk&&chk.classList.contains('checked')&&item.style.display!=='none')
@@ -695,7 +695,7 @@ function renderDashboard(allRows){
   const caso2Rows=allRows.filter(r=>!r.tieneSaas&&r.estadoSeguro!=='activo');
   const netCaso3=caso3Rows.reduce((s,r)=>s+r.netGain,0);
   const netCaso2=caso2Rows.reduce((s,r)=>s+r.netGain,0);
-  const arrCaso3=Math.round(netCaso3*12*(1-bbddChurn));
+  const arrCaso3=Math.round(Math.max(0,netCaso3)*12*(1-bbddChurn));
   const arrCaso1=Math.round(arrUpsell);
   const arrCaso2Corr=Math.round(netCaso2*12*(1-bbddChurn));
   const arrCaso2Saas=Math.round(caso2Rows.length*bbddDefaultIntercompany*12*(1-bbddChurn));
