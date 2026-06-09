@@ -376,6 +376,28 @@ function renderRentabilidad(){
 function setPeriod(p){projPeriod=p;['12','24','36'].forEach(x=>document.getElementById('btn-'+x).className='period-btn'+(p==x?' active-period':''));renderRentabilidad();}
 function setUmbral(v){umbralDiferencial=Math.max(0.5,Math.min(10,parseFloat(v)||2.0));const fmt=umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1});const g=document.getElementById('umbral-global');if(g)g.value=umbralDiferencial;const d=document.getElementById('umbral-display');if(d)d.textContent=fmt;const d2=document.getElementById('bbdd-umbral-display');if(d2)d2.textContent=fmt;const desc=document.getElementById('umbral-desc');if(desc)desc.innerHTML='Genera desde '+fmt+' veces lo que<br>cuesta el beneficio.';renderResumen();if(bbddFilterEstado==='califica')renderBBDD();}
 function setBBDDUmbral(v){setUmbral(v);}
+function exportBBDDExcel(){
+  if(!bbddFilteredRows.length){alert('No hay comunidades para exportar.');return;}
+  const filterNames={'all':'Todas','activo':'Activo','inactivo':'Inactivo','nunca':'Nunca','caso1':'Caso 1','caso2':'Caso 2','caso3':'Caso 3','califica':'Califica'};
+  const data=bbddFilteredRows.map(r=>({
+    'Comunidad':r.nombre,
+    'RUT':r.rut,
+    'Estado seguro':r.estadoSeguro,
+    'Cobertura':r.cob==='is'?'Inc.+Sismo':'Incendio',
+    'Tiene SaaS':r.tieneSaas?'Sí':'No',
+    'MA (UF)':parseFloat(r.ma.toFixed(2)),
+    'MRR seguro (UF/mes)':parseFloat(r.mrrSeg.toFixed(2)),
+    'Costo SaaS intercompany (UF/mes)':parseFloat(r.saasCost.toFixed(2)),
+    'Diferencial':parseFloat((r.saasCost>0?r.mrrSeg/r.saasCost:0).toFixed(2)),
+    'Califica (≥'+umbralDiferencial.toFixed(1)+'x)':(r.saasCost>0&&r.mrrSeg/r.saasCost>=umbralDiferencial)?'Sí':'No',
+    'Ganancia neta (UF/mes)':parseFloat(r.netGain.toFixed(2)),
+  }));
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Comunidades');
+  const fname='bbdd_cf_'+(filterNames[bbddFilterEstado]||bbddFilterEstado)+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+  XLSX.writeFile(wb,fname);
+}
 
 // ── Pitch ──
 function updatePitch(){
@@ -438,7 +460,7 @@ function recalc(){
 }
 
 // ── Análisis BBDD ──
-let bbddComunidades=[],bbddCob='is',bbddTasaIS=0.00160,bbddTasaI=0.00050,bbddDefaultIntercompany=1.20,bbddChurn=0.30,bbddFilterEstado='all',bbddSearch='';
+let bbddComunidades=[],bbddCob='is',bbddTasaIS=0.00160,bbddTasaI=0.00050,bbddDefaultIntercompany=1.20,bbddChurn=0.30,bbddFilterEstado='all',bbddSearch='',bbddFilteredRows=[];
 const UF_CLP=36000,USD_CLP=900;
 function fmtCLP(uf){return'$'+Math.round(uf*UF_CLP).toLocaleString('es-CL')+' CLP';}
 function fmtUSD(uf){return'US$ '+Math.round(uf*UF_CLP/USD_CLP).toLocaleString('en-US');}
@@ -937,7 +959,9 @@ function renderBBDD(){
   // ── Tabla (string building para performance con ~8k filas) ──
   const filterLabels={'all':'','activo':' (activo)','inactivo':' (inactivo)','nunca':' (nunca)','caso1':' (Caso 1 — Con SaaS, sin seguro)','caso2':' (Caso 2 — Sin SaaS, sin seguro)','caso3':' (Caso 3 — Con SaaS, activo)','califica':' (✅ Califica — diferencial ≥ '+umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1})+'x)'};
   const filterLabel=(filterLabels[bbddFilterEstado]||'')+( bbddSearch?` · "${bbddSearch}"`:'');
+  bbddFilteredRows=rows;
   const counter=document.getElementById('bbdd-counter');if(counter){counter.style.display='block';counter.innerHTML=`<span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--primary);">${rows.length.toLocaleString('es-CL')}</span> <span style="font-size:13px;font-weight:500;color:var(--muted);">comunidad${rows.length!==1?'es':''}</span>`;}
+  const expBtn=document.getElementById('bbdd-export-btn');if(expBtn)expBtn.style.display=rows.length?'flex':'none';
   let html='';
   rows.forEach(c=>{
     let sl,sc;
