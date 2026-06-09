@@ -374,7 +374,7 @@ function renderRentabilidad(){
 }
 
 function setPeriod(p){projPeriod=p;['12','24','36'].forEach(x=>document.getElementById('btn-'+x).className='period-btn'+(p==x?' active-period':''));renderRentabilidad();}
-function setUmbral(v){umbralDiferencial=Math.max(0.5,Math.min(10,parseFloat(v)||2.0));const g=document.getElementById('umbral-global');if(g)g.value=umbralDiferencial;const d=document.getElementById('umbral-display');if(d)d.textContent=umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1});renderResumen();}
+function setUmbral(v){umbralDiferencial=Math.max(0.5,Math.min(10,parseFloat(v)||2.0));const g=document.getElementById('umbral-global');if(g)g.value=umbralDiferencial;const d=document.getElementById('umbral-display');if(d)d.textContent=umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1});const desc=document.getElementById('umbral-desc');if(desc)desc.innerHTML='Genera desde '+umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+' veces lo que<br>cuesta el beneficio.';renderResumen();}
 
 // ── Pitch ──
 function updatePitch(){
