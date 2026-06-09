@@ -374,7 +374,8 @@ function renderRentabilidad(){
 }
 
 function setPeriod(p){projPeriod=p;['12','24','36'].forEach(x=>document.getElementById('btn-'+x).className='period-btn'+(p==x?' active-period':''));renderRentabilidad();}
-function setUmbral(v){umbralDiferencial=Math.max(0.5,Math.min(10,parseFloat(v)||2.0));const g=document.getElementById('umbral-global');if(g)g.value=umbralDiferencial;const d=document.getElementById('umbral-display');if(d)d.textContent=umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1});const desc=document.getElementById('umbral-desc');if(desc)desc.innerHTML='Genera desde '+umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+' veces lo que<br>cuesta el beneficio.';renderResumen();}
+function setUmbral(v){umbralDiferencial=Math.max(0.5,Math.min(10,parseFloat(v)||2.0));const fmt=umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1});const g=document.getElementById('umbral-global');if(g)g.value=umbralDiferencial;const d=document.getElementById('umbral-display');if(d)d.textContent=fmt;const d2=document.getElementById('bbdd-umbral-display');if(d2)d2.textContent=fmt;const desc=document.getElementById('umbral-desc');if(desc)desc.innerHTML='Genera desde '+fmt+' veces lo que<br>cuesta el beneficio.';renderResumen();if(bbddFilterEstado==='califica')renderBBDD();}
+function setBBDDUmbral(v){setUmbral(v);}
 
 // ── Pitch ──
 function updatePitch(){
@@ -860,6 +861,7 @@ function renderBBDD(){
   else if(bbddFilterEstado==='caso3')    rows=rows.filter(r=>r.tieneSaas&&r.estadoSeguro==='activo');
   else if(bbddFilterEstado==='caso1')    rows=rows.filter(r=>r.tieneSaas&&r.estadoSeguro!=='activo');
   else if(bbddFilterEstado==='caso2')    rows=rows.filter(r=>!r.tieneSaas&&r.estadoSeguro!=='activo');
+  else if(bbddFilterEstado==='califica') rows=rows.filter(r=>r.saasCost>0&&(r.mrrSeg/r.saasCost)>=umbralDiferencial);
   // Aplicar búsqueda por nombre / RUT
   if(bbddSearch){
     const q=norm(bbddSearch);
@@ -933,7 +935,7 @@ function renderBBDD(){
   }
 
   // ── Tabla (string building para performance con ~8k filas) ──
-  const filterLabels={'all':'','activo':' (activo)','inactivo':' (inactivo)','nunca':' (nunca)','caso1':' (Caso 1 — Con SaaS, sin seguro)','caso2':' (Caso 2 — Sin SaaS, sin seguro)','caso3':' (Caso 3 — Con SaaS, activo)'};
+  const filterLabels={'all':'','activo':' (activo)','inactivo':' (inactivo)','nunca':' (nunca)','caso1':' (Caso 1 — Con SaaS, sin seguro)','caso2':' (Caso 2 — Sin SaaS, sin seguro)','caso3':' (Caso 3 — Con SaaS, activo)','califica':' (✅ Califica — diferencial ≥ '+umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1})+'x)'};
   const filterLabel=(filterLabels[bbddFilterEstado]||'')+( bbddSearch?` · "${bbddSearch}"`:'');
   let html='';
   rows.forEach(c=>{

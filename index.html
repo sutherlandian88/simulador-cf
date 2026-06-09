@@ -245,7 +245,7 @@
       <div><span class="cn-template" onclick="event.stopPropagation();downloadBBDDTemplate()">Descargar plantilla CSV</span></div>
     </div>
 
-    <div class="inputs-grid" style="margin-bottom:1.5rem;grid-template-columns:1fr 1fr 1fr 1fr;">
+    <div class="inputs-grid" style="margin-bottom:1.5rem;grid-template-columns:1fr 1fr 1fr 1fr 1fr;">
       <div class="input-card">
         <div class="input-label">Cobertura por defecto</div>
         <div class="cob-grid">
@@ -274,6 +274,18 @@
           <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);">%</span>
         </div>
         <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4;">Comunidades que no renuevan/año.<br>0% = potencial bruto.</div>
+      </div>
+      <div class="input-card">
+        <div class="input-label">Parámetro de Rentabilidad</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <button onclick="setBBDDUmbral(umbralDiferencial-0.5)" style="width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+          <div style="background:var(--surface2);border-radius:8px;padding:5px 12px;display:inline-flex;align-items:baseline;gap:4px;">
+            <span id="bbdd-umbral-display" style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);line-height:1;">2,0</span>
+            <span style="font-size:13px;font-weight:600;color:var(--muted);">x</span>
+          </div>
+          <button onclick="setBBDDUmbral(umbralDiferencial+0.5)" style="width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.4;">Filtra comunidades que<br>califican para la alianza.</div>
       </div>
     </div>
 
@@ -337,6 +349,7 @@
             <button class="bbdd-estado-btn" data-val="caso3" onclick="setBBDDEstadoFilter('caso3')" style="border-color:#0a9e7240;color:#0a9e72;">● Caso 3</button>
             <button class="bbdd-estado-btn" data-val="caso1" onclick="setBBDDEstadoFilter('caso1')" style="border-color:#1a5ac440;color:#1a5ac4;">● Caso 1</button>
             <button class="bbdd-estado-btn" data-val="caso2" onclick="setBBDDEstadoFilter('caso2')" style="border-color:#7050b840;color:#7050b8;">● Caso 2</button>
+            <button class="bbdd-estado-btn" data-val="califica" onclick="setBBDDEstadoFilter('califica')" style="border-color:#f59e0b40;color:#d97706;font-weight:700;">✅ Califica</button>
           </div>
         </div>
       </div>
