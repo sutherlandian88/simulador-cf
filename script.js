@@ -971,7 +971,7 @@ function renderBBDD(){
   rows.forEach(c=>{
     let sl,sc;
     if(c.netGain>=1){sl='Alta';sc='#0a9e72';}else if(c.netGain>=0){sl='Media';sc='#BA7517';}else{sl='Baja';sc='#d63228';}
-    const difColor=c.diferencial>=2?'#0a9e72':c.diferencial>=1?'#BA7517':'#d63228';
+    const difColor=c.diferencial>=umbralDiferencial?'#0a9e72':c.diferencial>=1?'#BA7517':'#d63228';
     const noteVal=(notes[c.noteKey]||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
     const nk=c.noteKey.replace(/'/g,"\\'");
     html+=`<tr>
