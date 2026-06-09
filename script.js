@@ -25,7 +25,7 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 let cob='is',projPeriod=12,projChart=null,mrr=0,costoCitoMes=0,costoCito3m=0;
 let tiene={saas:false,cito:false,acceso:false};
 let sel={saas:false,cito:false,acceso:false};
-let showComparador=false,showHistorial=false;
+let showComparador=false,showHistorial=false,umbralDiferencial=2.0;
 let tasaIS=0.0017,tasaI=0.0005;
 
 function getComisionAgente(mrrVal){return (mrrVal/10)*4.5;}
@@ -319,7 +319,8 @@ function renderResumen(){
     `<div class="res-row"><span>Comisión agente <span class="tag-once">Solo mes 1</span></span><span class="val red">−${fmtUF(comAgente)} UF</span></div>`+
     costoDetalle.map(d=>`<div class="res-row"><span>${d.label}</span><span class="val red">−${fmtUF(d.val)} UF/mes</span></div>`).join('')+
     `<div class="res-row"><span>Costo total beneficios</span><span class="val red">−${fmtUF(costoTotal)} UF/mes</span></div>`+
-    `<div class="res-row"><span><strong>Remanente neto (mes 1)</strong></span><span class="val ${remMes1>=0?'green':'red'}">${(remMes1>=0?'+':'')}${fmtUF(remMes1)} UF</span></div>`+
+    (()=>{const dif=costoTotal>0?mrr/costoTotal:null;const ok=dif!==null&&dif>=umbralDiferencial;const col=dif===null?'#5570a0':ok?'#0a9e72':'#d63228';const badge=dif===null?'—':ok?'✅ Califica':'❌ No califica';const difStr=dif!==null?fmtUF(dif,2)+'x':'—';return`<div class="res-row" style="border-top:1px solid #eef0f8;margin-top:4px;padding-top:6px;"><span><strong>Diferencial</strong></span><span class="val" style="color:${col};font-weight:700;">${difStr} <span style="font-weight:400;font-size:12px;">${badge}</span></span></div><div class="res-row"><span style="color:var(--muted);font-size:12px;">Umbral mínimo</span><span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);justify-content:flex-end;"><input type="number" value="${umbralDiferencial}" min="0.5" max="10" step="0.5" onchange="setUmbral(this.value)" style="width:46px;padding:2px 5px;border:1px solid #dde3f0;border-radius:5px;font-size:12px;text-align:center;background:var(--bg);color:var(--text);">x</span></div>`;})()+
+    `<div class="res-row" style="border-top:1px solid #eef0f8;margin-top:4px;padding-top:6px;"><span><strong>Remanente neto (mes 1)</strong></span><span class="val ${remMes1>=0?'green':'red'}">${(remMes1>=0?'+':'')}${fmtUF(remMes1)} UF</span></div>`+
     `<div class="res-row"><span><strong>Remanente neto (mes 2+)</strong></span><span class="val ${remEstable>=0?'green':'red'}">${(remEstable>=0?'+':'')}${fmtUF(remEstable)} UF/mes</span></div>`;
   renderRentabilidad();
 }
@@ -373,6 +374,7 @@ function renderRentabilidad(){
 }
 
 function setPeriod(p){projPeriod=p;['12','24','36'].forEach(x=>document.getElementById('btn-'+x).className='period-btn'+(p==x?' active-period':''));renderRentabilidad();}
+function setUmbral(v){umbralDiferencial=Math.max(0.1,parseFloat(v)||2.0);renderResumen();}
 
 // ── Pitch ──
 function updatePitch(){
