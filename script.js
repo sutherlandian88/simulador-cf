@@ -937,6 +937,7 @@ function renderBBDD(){
   // ── Tabla (string building para performance con ~8k filas) ──
   const filterLabels={'all':'','activo':' (activo)','inactivo':' (inactivo)','nunca':' (nunca)','caso1':' (Caso 1 — Con SaaS, sin seguro)','caso2':' (Caso 2 — Sin SaaS, sin seguro)','caso3':' (Caso 3 — Con SaaS, activo)','califica':' (✅ Califica — diferencial ≥ '+umbralDiferencial.toLocaleString('es-CL',{minimumFractionDigits:1})+'x)'};
   const filterLabel=(filterLabels[bbddFilterEstado]||'')+( bbddSearch?` · "${bbddSearch}"`:'');
+  const counter=document.getElementById('bbdd-counter');if(counter){counter.style.display='block';counter.innerHTML=`<span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--primary);">${rows.length.toLocaleString('es-CL')}</span> <span style="font-size:13px;font-weight:500;color:var(--muted);">comunidad${rows.length!==1?'es':''}</span>`;}
   let html='';
   rows.forEach(c=>{
     let sl,sc;
