@@ -379,19 +379,24 @@ function setBBDDUmbral(v){setUmbral(v);}
 function exportBBDDExcel(){
   if(!bbddFilteredRows.length){alert('No hay comunidades para exportar.');return;}
   const filterNames={'all':'Todas','activo':'Activo','inactivo':'Inactivo','nunca':'Nunca','caso1':'Caso 1','caso2':'Caso 2','caso3':'Caso 3','califica':'Califica'};
-  const data=bbddFilteredRows.map(r=>({
-    'Comunidad':r.nombre,
-    'RUT':r.rut,
-    'Estado seguro':r.estadoSeguro,
-    'Cobertura':r.cob==='is'?'Inc.+Sismo':'Incendio',
-    'Tiene SaaS':r.tieneSaas?'Sí':'No',
-    'MA (UF)':parseFloat(r.ma.toFixed(2)),
-    'MRR seguro (UF/mes)':parseFloat(r.mrrSeg.toFixed(2)),
-    'Costo SaaS intercompany (UF/mes)':parseFloat(r.saasCost.toFixed(2)),
-    'Diferencial':parseFloat((r.saasCost>0?r.mrrSeg/r.saasCost:0).toFixed(2)),
-    'Califica (≥'+umbralDiferencial.toFixed(1)+'x)':(r.saasCost>0&&r.mrrSeg/r.saasCost>=umbralDiferencial)?'Sí':'No',
-    'Ganancia neta (UF/mes)':parseFloat(r.netGain.toFixed(2)),
-  }));
+  const data=bbddFilteredRows.map(r=>{
+    const ratio=r.saasCost>0?parseFloat((r.mrrSeg/r.saasCost).toFixed(2)):0;
+    const califica=r.saasCost>0&&ratio>=umbralDiferencial;
+    const oportunidad=r.netGain>=1?'Alta':r.netGain>=0?'Media':'Baja';
+    return{
+      'Comunidad':r.nombre,
+      'RUT':r.rut,
+      'Estado seguro':r.estadoSeguro,
+      'Cobertura':r.cob==='is'?'Inc.+Sismo':'Incendio',
+      'MA (UF)':parseFloat(r.ma.toFixed(2)),
+      'MRR seguro (UF/mes)':parseFloat(r.mrrSeg.toFixed(2)),
+      'Precio lista SaaS (UF/mes)':parseFloat(r.precioLista.toFixed(2)),
+      'Precio intercompany (UF/mes)':parseFloat(r.saasCost.toFixed(2)),
+      'Ratio MRR/SaaS':ratio,
+      'Remanente corredora (UF/mes)':parseFloat(r.netGain.toFixed(2)),
+      'Oportunidad':oportunidad+(califica?' ✅':''),
+    };
+  });
   const ws=XLSX.utils.json_to_sheet(data);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Comunidades');
