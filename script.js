@@ -1011,7 +1011,20 @@ recalc();
 
 // ── Tabla de Rentabilidad ──
 let tablaSelectedThreshold=2.0;
-const TABLA_THRESHOLDS=[1,1.5,2,2.5,3,3.5,4,4.5,5];
+let tablaSubExpanded=false;
+const TABLA_THRESHOLDS=[1,1.5,2,3,3.5,4,4.5,5];
+const TABLA_SUBTIERS=[2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9];
+
+function _tablaRowHTML(t,qualifying,mrrTotal,remTotal,isSelected,isSub){
+  const arrNeto=remTotal*12;
+  const indent=isSub?'padding-left:28px;color:var(--muted);font-size:13px;':'';
+  const prefix=isSub?'<span style="opacity:.4;margin-right:4px;">└</span>':'';
+  return `<td style="${indent}">${prefix}${t}x</td>`+
+    `<td style="text-align:right;">${qualifying.length.toLocaleString('es-CL')}</td>`+
+    `<td style="text-align:right;">UF ${mrrTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
+    `<td style="text-align:right;">UF ${remTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
+    `<td style="text-align:right;">UF ${arrNeto.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`;
+}
 
 function renderTabla(){
   if(!bbddComunidades||bbddComunidades.length===0){
@@ -1037,27 +1050,64 @@ function renderTabla(){
     const qualifying=allRows.filter(r=>r.diferencial>=t);
     const mrrTotal=qualifying.reduce((s,r)=>s+r.mrrSeg,0);
     const remTotal=qualifying.reduce((s,r)=>s+r.remanente,0);
-    const arrNeto=remTotal*12;
     const isSelected=t===tablaSelectedThreshold;
     const tr=document.createElement('tr');
     tr.style.cssText='cursor:pointer;'+(isSelected?'background:var(--primary-light,#e8f5ef);font-weight:700;':'');
+    tr.dataset.thresh=t;
     tr.onclick=(()=>{const _t=t;return()=>selectTablaThreshold(_t,allRows);})();
-    tr.innerHTML=`<td>${t}x</td>`+
-      `<td style="text-align:right;">${qualifying.length.toLocaleString('es-CL')}</td>`+
-      `<td style="text-align:right;">UF ${mrrTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
-      `<td style="text-align:right;">UF ${remTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
-      `<td style="text-align:right;">UF ${arrNeto.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`;
+    // Fila 2x: agrega botón expandir
+    if(t===2){
+      const expandIcon=tablaSubExpanded?'▾':'▸';
+      tr.innerHTML=`<td style="white-space:nowrap;">${t}x <button onclick="event.stopPropagation();toggleTablaSubtiers(this,allRowsRef)" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px;cursor:pointer;color:var(--muted);margin-left:6px;">${expandIcon} 2.1–2.9</button></td>`+
+        `<td style="text-align:right;">${qualifying.length.toLocaleString('es-CL')}</td>`+
+        `<td style="text-align:right;">UF ${mrrTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
+        `<td style="text-align:right;">UF ${remTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
+        `<td style="text-align:right;">UF ${(remTotal*12).toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`;
+      // Fix: allRowsRef no disponible en onclick inline — usamos closure
+      tr.querySelector('button').onclick=function(e){e.stopPropagation();toggleTablaSubtiers(allRows);};
+    } else {
+      tr.innerHTML=_tablaRowHTML(t,qualifying,mrrTotal,remTotal,isSelected,false);
+    }
     tbodyS.appendChild(tr);
+    // Sub-filas 2.1–2.9 después de la fila 2x
+    if(t===2){
+      TABLA_SUBTIERS.forEach(st=>{
+        const sq=allRows.filter(r=>r.diferencial>=st);
+        const sm=sq.reduce((s,r)=>s+r.mrrSeg,0);
+        const sr=sq.reduce((s,r)=>s+r.remanente,0);
+        const isSel=st===tablaSelectedThreshold;
+        const subTr=document.createElement('tr');
+        subTr.dataset.subtier=st;
+        subTr.style.cssText=(tablaSubExpanded?'':'display:none;')+'cursor:pointer;'+(isSel?'background:var(--primary-light,#e8f5ef);font-weight:700;':'background:#f9fafb;');
+        subTr.onclick=(()=>{const _t=st;return()=>selectTablaThreshold(_t,allRows);})();
+        subTr.innerHTML=_tablaRowHTML(st,sq,sm,sr,isSel,true);
+        tbodyS.appendChild(subTr);
+      });
+    }
   });
   renderTablaDetail(allRows);
+}
+
+function toggleTablaSubtiers(allRows){
+  tablaSubExpanded=!tablaSubExpanded;
+  const tbodyS=document.getElementById('tabla-summary-tbody');
+  // Actualiza icono en botón
+  const btn=tbodyS.querySelector('button');
+  if(btn)btn.textContent=(tablaSubExpanded?'▾':'▸')+' 2.1–2.9';
+  // Muestra/oculta sub-filas
+  Array.from(tbodyS.querySelectorAll('tr[data-subtier]')).forEach(tr=>{
+    tr.style.display=tablaSubExpanded?'':'none';
+  });
 }
 
 function selectTablaThreshold(t,allRows){
   tablaSelectedThreshold=t;
   const tbodyS=document.getElementById('tabla-summary-tbody');
-  Array.from(tbodyS.rows).forEach((tr,i)=>{
-    const sel=TABLA_THRESHOLDS[i]===t;
-    tr.style.background=sel?'var(--primary-light,#e8f5ef)':'';
+  const allThresholds=[...TABLA_THRESHOLDS,...TABLA_SUBTIERS];
+  Array.from(tbodyS.rows).forEach(tr=>{
+    const th=parseFloat(tr.dataset.thresh||tr.dataset.subtier);
+    const sel=th===t;
+    tr.style.background=sel?'var(--primary-light,#e8f5ef)':(tr.dataset.subtier?'#f9fafb':'');
     tr.style.fontWeight=sel?'700':'';
   });
   renderTablaDetail(allRows);
