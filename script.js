@@ -34,11 +34,12 @@ function norm(s){return String(s).toLowerCase().replace(/[áàä]/g,'a').replace
 
 // ── Vista ──
 function setView(v){
-  ['simulador','dashboard','bbdd','guia'].forEach(id=>{
+  ['simulador','bbdd','tabla','dashboard','guia'].forEach(id=>{
     document.getElementById('view-'+id).style.display=v===id?'block':'none';
     document.getElementById('tab-'+id).className='nav-tab'+(v===id?' active':'');
   });
   if(v==='dashboard')renderDashboard();
+  if(v==='tabla')renderTabla();
 }
 
 // ── Parámetros seguro ──
@@ -1007,6 +1008,108 @@ function renderBBDD(){
 }
 
 recalc();
+
+// ── Tabla de Rentabilidad ──
+let tablaSelectedThreshold=2.0;
+const TABLA_THRESHOLDS=[1,1.5,2,2.5,3,3.5,4,4.5,5];
+
+function renderTabla(){
+  if(!bbddComunidades||bbddComunidades.length===0){
+    document.getElementById('tabla-empty').style.display='block';
+    document.getElementById('tabla-content').style.display='none';
+    return;
+  }
+  document.getElementById('tabla-empty').style.display='none';
+  document.getElementById('tabla-content').style.display='block';
+  const allRows=bbddComunidades.map(r=>{
+    const saasCost=r.saasCost||0;
+    const saasIntercompany=saasCost*(bbddDefaultIntercompany||1.20);
+    const mrrSeg=r.mrrSeg||0;
+    const diferencial=saasCost>0?mrrSeg/saasCost:0;
+    const remanente=mrrSeg-saasIntercompany;
+    return{...r,saasCost,saasIntercompany,mrrSeg,diferencial,remanente};
+  });
+  const tbodyS=document.getElementById('tabla-summary-tbody');
+  tbodyS.innerHTML='';
+  TABLA_THRESHOLDS.forEach(t=>{
+    const qualifying=allRows.filter(r=>r.diferencial>=t);
+    const mrrTotal=qualifying.reduce((s,r)=>s+r.mrrSeg,0);
+    const remTotal=qualifying.reduce((s,r)=>s+r.remanente,0);
+    const arrNeto=remTotal*12;
+    const isSelected=t===tablaSelectedThreshold;
+    const tr=document.createElement('tr');
+    tr.style.cssText='cursor:pointer;'+(isSelected?'background:var(--primary-light,#e8f5ef);font-weight:700;':'');
+    tr.onclick=(()=>{const _t=t;return()=>selectTablaThreshold(_t,allRows);})();
+    tr.innerHTML=`<td>${t}x</td>`+
+      `<td style="text-align:right;">${qualifying.length.toLocaleString('es-CL')}</td>`+
+      `<td style="text-align:right;">UF ${mrrTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
+      `<td style="text-align:right;">UF ${remTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
+      `<td style="text-align:right;">UF ${arrNeto.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`;
+    tbodyS.appendChild(tr);
+  });
+  renderTablaDetail(allRows);
+}
+
+function selectTablaThreshold(t,allRows){
+  tablaSelectedThreshold=t;
+  const tbodyS=document.getElementById('tabla-summary-tbody');
+  Array.from(tbodyS.rows).forEach((tr,i)=>{
+    const sel=TABLA_THRESHOLDS[i]===t;
+    tr.style.background=sel?'var(--primary-light,#e8f5ef)':'';
+    tr.style.fontWeight=sel?'700':'';
+  });
+  renderTablaDetail(allRows);
+}
+
+function renderTablaDetail(allRows){
+  const rows=allRows.filter(r=>r.diferencial>=tablaSelectedThreshold);
+  document.getElementById('tabla-detail-title').textContent=
+    `Comunidades con rentabilidad ≥ ${tablaSelectedThreshold}x (${rows.length.toLocaleString('es-CL')})`;
+  const exportBtn=document.getElementById('tabla-export-btn');
+  exportBtn.style.display=rows.length>0?'inline-flex':'none';
+  window._tablaDetailRows=rows;
+  const tbody=document.getElementById('tabla-detail-tbody');
+  tbody.innerHTML='';
+  rows.forEach(r=>{
+    const difColor=r.diferencial>=tablaSelectedThreshold?'#0a9e72':r.diferencial>=1?'#BA7517':'#d63228';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(r.nombre||r.comunidad||'')}</td>`+
+      `<td style="font-size:11px;color:var(--muted);">${esc(r.rut||'—')}</td>`+
+      `<td><span class="estado-badge estado-${r.estadoSeguro||'nunca'}">${r.estadoSeguro||'nunca'}</span></td>`+
+      `<td><span class="cn-badge ${r.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${r.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>`+
+      `<td style="text-align:right;">${r.ma>0?r.ma.toLocaleString('es-CL')+' UF':'—'}</td>`+
+      `<td style="text-align:right;color:#1a5ac4;font-weight:500;">${r.mrrSeg>0?fmtUF(r.mrrSeg)+' UF':'—'}</td>`+
+      `<td style="text-align:right;color:var(--muted);">${r.saasCost>0?fmtUF(r.saasCost)+' UF':'—'}</td>`+
+      `<td style="text-align:right;">${r.saasIntercompany>0?fmtUF(r.saasIntercompany)+' UF':'—'}</td>`+
+      `<td style="text-align:right;color:${difColor};font-weight:600;">${r.diferencial.toFixed(2)}x</td>`+
+      `<td style="text-align:right;font-weight:500;color:${r.remanente>=0?'#0a9e72':'#d63228'};">${(r.remanente>=0?'+':'')+fmtUF(r.remanente)} UF</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function exportTablaExcel(){
+  const rows=window._tablaDetailRows||[];
+  if(!rows.length)return;
+  const wsData=[['Comunidad','RUT','Estado seguro','Cobertura','MA (UF)','MRR seguro (UF)','Precio lista SaaS (UF)','Precio intercompany (UF)','Ratio MRR/SaaS','Remanente corredora (UF)']];
+  rows.forEach(r=>{
+    wsData.push([
+      r.nombre||r.comunidad||'',
+      r.rut||'',
+      r.estadoSeguro||r.estado||'',
+      r.cobr==='is'?'Inc.+Sismo':'Incendio',
+      r.ma||0,
+      +r.mrrSeg.toFixed(2),
+      +r.saasCost.toFixed(2),
+      +r.saasIntercompany.toFixed(2),
+      +r.diferencial.toFixed(4),
+      +r.remanente.toFixed(2)
+    ]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  const wb_exp=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb_exp,'Tabla',ws);
+  XLSX.writeFile(wb_exp,`tabla_rentabilidad_${tablaSelectedThreshold}x.xlsx`);
+}
 
 // ── Carga BBDD por defecto (Proyección MA — datos embebidos) ──
 function loadDefaultBBDD(){

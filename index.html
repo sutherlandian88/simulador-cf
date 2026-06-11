@@ -15,6 +15,7 @@
   <div class="nav-tabs">
     <div class="nav-tab active" id="tab-simulador" onclick="setView('simulador')">Simulador de venta</div>
     <div class="nav-tab" id="tab-bbdd" onclick="setView('bbdd')">Análisis de BBDD</div>
+    <div class="nav-tab" id="tab-tabla" onclick="setView('tabla')">Tabla</div>
     <div class="nav-tab" id="tab-dashboard" onclick="setView('dashboard')">Dashboard</div>
     <div class="nav-tab" id="tab-guia" onclick="setView('guia')">Guía</div>
   </div>
@@ -383,6 +384,53 @@
       <div class="pdf-bar"><a class="pdf-btn-el primary" onclick="window.print()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar PDF</a></div>
     </div>
     <div class="cn-empty" id="bbdd-empty">Carga la BBDD para ver el análisis de conversión</div>
+  </div>
+
+  <!-- ═══════════════ TABLA ═══════════════ -->
+  <div id="view-tabla" style="display:none;">
+    <div class="bbdd-intro">
+      <div class="s-label">Tabla de Rentabilidad</div>
+      <p class="bbdd-desc">Universo de comunidades calificadas por umbral de diferencial MRR/SaaS. Haz click en una fila para ver el detalle de esas comunidades.</p>
+    </div>
+    <div id="tabla-empty" style="text-align:center;padding:4rem 2rem;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:1rem;">📋</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">Sin datos cargados</div>
+      <div style="font-size:13px;">Ve al tab <strong>Análisis de BBDD</strong> y carga el archivo de comunidades primero.</div>
+    </div>
+    <div id="tabla-content" style="display:none;">
+      <!-- Resumen por umbral -->
+      <div class="cn-table-wrap" style="margin-bottom:1.75rem;">
+        <table class="cn-table">
+          <thead>
+            <tr>
+              <th>Rentabilidad</th>
+              <th style="text-align:right;">Comunidades</th>
+              <th style="text-align:right;">MRR seguro total</th>
+              <th style="text-align:right;">Remanente corredora</th>
+              <th style="text-align:right;">ARR neto</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-summary-tbody"></tbody>
+        </table>
+      </div>
+      <!-- Detalle comunidades -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:8px;">
+        <div id="tabla-detail-title" class="s-label" style="margin-bottom:0;"></div>
+        <button onclick="exportTablaExcel()" id="tabla-export-btn" style="display:none;padding:7px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;align-items:center;gap:6px;">⬇ Exportar Excel</button>
+      </div>
+      <div class="cn-table-wrap">
+        <table class="cn-table">
+          <thead>
+            <tr>
+              <th>Comunidad</th><th>RUT</th><th>Estado seguro</th><th>Cobertura</th>
+              <th>MA (UF)</th><th>MRR seguro</th><th>Precio lista SaaS</th>
+              <th>Precio intercompany</th><th>Ratio MRR/SaaS</th><th>Remanente corredora</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-detail-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- ═══════════════ DASHBOARD ═══════════════ -->
