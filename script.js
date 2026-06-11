@@ -1131,7 +1131,8 @@ function renderTablaDetail(allRows){
       `<td><span class="cn-badge ${r.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${r.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>`+
       `<td style="text-align:right;">${r.ma>0?r.ma.toLocaleString('es-CL')+' UF':'—'}</td>`+
       `<td style="text-align:right;color:#1a5ac4;font-weight:500;">${r.mrrSeg>0?fmtUF(r.mrrSeg)+' UF':'—'}</td>`+
-      `<td style="text-align:right;color:var(--muted);">${r.saasCost>0?fmtUF(r.saasCost)+' UF':'—'}</td>`+
+      `<td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:${r.tieneSaas?'#0a9e7218':'#d6322818'};color:${r.tieneSaas?'#0a9e72':'#d63228'};">${r.tieneSaas?'Sí':'No'}</span></td>`+
+      `<td style="text-align:right;color:var(--muted);">${r.tieneSaas&&r.precioLista>0?fmtUF(r.precioLista)+' UF':'—'}</td>`+
       `<td style="text-align:right;">${r.saasIntercompany>0?fmtUF(r.saasIntercompany)+' UF':'—'}</td>`+
       `<td style="text-align:right;color:${difColor};font-weight:600;">${r.diferencial.toFixed(2)}x</td>`+
       `<td style="text-align:right;font-weight:500;color:${r.remanente>=0?'#0a9e72':'#d63228'};">${(r.remanente>=0?'+':'')+fmtUF(r.remanente)} UF</td>`;
@@ -1142,7 +1143,7 @@ function renderTablaDetail(allRows){
 function exportTablaExcel(){
   const rows=window._tablaDetailRows||[];
   if(!rows.length)return;
-  const wsData=[['Comunidad','RUT','Estado seguro','Cobertura','MA (UF)','MRR seguro (UF)','Precio lista SaaS (UF)','Precio intercompany (UF)','Ratio MRR/SaaS','Remanente corredora (UF)']];
+  const wsData=[['Comunidad','RUT','Estado seguro','Cobertura','MA (UF)','MRR seguro (UF)','¿Tiene SaaS?','Precio lista SaaS (UF)','Precio intercompany (UF)','Ratio MRR/SaaS','Remanente corredora (UF)']];
   rows.forEach(r=>{
     wsData.push([
       r.nombre||r.comunidad||'',
@@ -1151,7 +1152,8 @@ function exportTablaExcel(){
       r.cobr==='is'?'Inc.+Sismo':'Incendio',
       r.ma||0,
       +r.mrrSeg.toFixed(2),
-      +r.saasCost.toFixed(2),
+      r.tieneSaas?'Sí':'No',
+      r.tieneSaas&&r.precioLista>0?+r.precioLista.toFixed(2):'',
       +r.saasIntercompany.toFixed(2),
       +r.diferencial.toFixed(4),
       +r.remanente.toFixed(2)
