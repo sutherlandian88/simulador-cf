@@ -1021,13 +1021,15 @@ function renderTabla(){
   }
   document.getElementById('tabla-empty').style.display='none';
   document.getElementById('tabla-content').style.display='block';
+  const com=parseFloat(document.getElementById('bbdd-comision').value)/100;
   const allRows=bbddComunidades.map(r=>{
-    const saasCost=r.saasCost||0;
-    const saasIntercompany=saasCost*(bbddDefaultIntercompany||1.20);
-    const mrrSeg=r.mrrSeg||0;
+    const cobr=r.cob||bbddCob;
+    const tasa=cobr==='is'?bbddTasaIS:bbddTasaI;
+    const mrrSeg=r.ma>0?r.ma*tasa*com/12:0;
+    const saasCost=r.tieneSaas?r.precioLista:bbddDefaultIntercompany;
     const diferencial=saasCost>0?mrrSeg/saasCost:0;
-    const remanente=mrrSeg-saasIntercompany;
-    return{...r,saasCost,saasIntercompany,mrrSeg,diferencial,remanente};
+    const remanente=mrrSeg-saasCost;
+    return{...r,cobr,mrrSeg,saasCost,saasIntercompany:bbddDefaultIntercompany,diferencial,remanente};
   });
   const tbodyS=document.getElementById('tabla-summary-tbody');
   tbodyS.innerHTML='';
