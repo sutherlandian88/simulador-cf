@@ -1058,7 +1058,7 @@ function renderTabla(){
     // Fila 2x: agrega botón expandir
     if(t===2){
       const expandIcon=tablaSubExpanded?'▾':'▸';
-      tr.innerHTML=`<td style="white-space:nowrap;">${t}x <button onclick="event.stopPropagation();toggleTablaSubtiers(this,allRowsRef)" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px;cursor:pointer;color:var(--muted);margin-left:6px;">${expandIcon} 2.1–2.9</button></td>`+
+      tr.innerHTML=`<td style="white-space:nowrap;">${t}x <button onclick="event.stopPropagation();toggleTablaSubtiers(this,allRowsRef)" style="background:none;border:none;padding:1px 4px;font-size:13px;cursor:pointer;color:var(--muted);margin-left:4px;line-height:1;">${expandIcon}</button></td>`+
         `<td style="text-align:right;">${qualifying.length.toLocaleString('es-CL')}</td>`+
         `<td style="text-align:right;">UF ${mrrTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
         `<td style="text-align:right;">UF ${remTotal.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>`+
@@ -1093,7 +1093,7 @@ function toggleTablaSubtiers(allRows){
   const tbodyS=document.getElementById('tabla-summary-tbody');
   // Actualiza icono en botón
   const btn=tbodyS.querySelector('button');
-  if(btn)btn.textContent=(tablaSubExpanded?'▾':'▸')+' 2.1–2.9';
+  if(btn)btn.textContent=tablaSubExpanded?'▾':'▸';
   // Muestra/oculta sub-filas
   Array.from(tbodyS.querySelectorAll('tr[data-subtier]')).forEach(tr=>{
     tr.style.display=tablaSubExpanded?'':'none';
