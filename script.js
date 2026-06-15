@@ -88,6 +88,42 @@ function renderAgenteBBDD(){
   document.getElementById('agente-bbdd-tbody').innerHTML=html;
 }
 
+function filterAgenteBBDD(){
+  const q=(document.getElementById('agente-bbdd-search').value||'').trim().toLowerCase();
+  const clr=document.getElementById('agente-bbdd-search-clear');
+  if(clr)clr.style.display=q?'block':'none';
+  const all=window._agenteBBDDRows||[];
+  const rows=q?all.filter(r=>{
+    if(norm(r.nombre||'').includes(q))return true;
+    const digits=q.replace(/[^0-9]/g,'');
+    if(digits&&String(r.rut||'').replace(/[^0-9]/g,'').includes(digits))return true;
+    return false;
+  }):all;
+  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidad'+(rows.length!==1?'es':'')+' con diferencial ≥ 3x'+(q?' · "'+q+'"':'');
+  let html='';
+  rows.forEach(r=>{
+    const difColor=r.diferencial>=3?'#0a9e72':r.diferencial>=1?'#BA7517':'#d63228';
+    html+=`<tr>
+      <td>${esc(r.nombre||'')}</td>
+      <td style="font-size:11px;color:var(--muted);">${esc(r.rut||'—')}</td>
+      <td><span class="estado-badge estado-${r.estadoSeguro||'nunca'}">${r.estadoSeguro||'nunca'}</span></td>
+      <td><span class="cn-badge ${r.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${r.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>
+      <td style="text-align:right;">${r.ma>0?r.ma.toLocaleString('es-CL')+' UF':'—'}</td>
+      <td style="text-align:right;color:#1a5ac4;font-weight:500;">${r.mrrSeg>0?fmtUF(r.mrrSeg)+' UF':'—'}</td>
+      <td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:${r.tieneSaas?'#0a9e7218':'#d6322818'};color:${r.tieneSaas?'#0a9e72':'#d63228'};">${r.tieneSaas?'Sí':'No'}</span></td>
+      <td style="text-align:right;color:${difColor};font-weight:600;">${r.diferencial.toFixed(2)}x</td>
+      <td style="text-align:right;font-weight:500;color:${r.remanente>=0?'#0a9e72':'#d63228'};">${(r.remanente>=0?'+':'')+fmtUF(r.remanente)} UF</td>
+    </tr>`;
+  });
+  document.getElementById('agente-bbdd-tbody').innerHTML=html;
+}
+
+function clearAgenteBBDDSearch(){
+  const el=document.getElementById('agente-bbdd-search');
+  if(el)el.value='';
+  filterAgenteBBDD();
+}
+
 function exportAgenteBBDD(){
   const rows=window._agenteBBDDRows||[];
   if(!rows.length)return;

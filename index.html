@@ -198,6 +198,10 @@
         </div>
         <button onclick="exportAgenteBBDD()" id="agente-bbdd-export-btn" style="display:none;padding:7px 16px;background:var(--primary,#1a5ac4);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;align-items:center;gap:6px;">⬇ Exportar Excel</button>
       </div>
+      <div style="position:relative;margin-bottom:1rem;">
+        <input type="text" id="agente-bbdd-search" placeholder="Buscar por nombre o RUT…" oninput="filterAgenteBBDD()" style="width:100%;padding:9px 36px 9px 14px;border:1.5px solid var(--border,#dde0eb);border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);outline:none;">
+        <span id="agente-bbdd-search-clear" onclick="clearAgenteBBDDSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;color:var(--muted);">×</span>
+      </div>
       <div class="cn-table-wrap">
         <table class="cn-table">
           <thead>
