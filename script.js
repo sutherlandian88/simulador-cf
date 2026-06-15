@@ -34,12 +34,53 @@ function norm(s){return String(s).toLowerCase().replace(/[áàä]/g,'a').replace
 
 // ── Vista ──
 function setView(v){
-  ['simulador','bbdd','tabla','dashboard','guia'].forEach(id=>{
+  ['agente','simulador','bbdd','tabla','dashboard','guia'].forEach(id=>{
     document.getElementById('view-'+id).style.display=v===id?'block':'none';
     document.getElementById('tab-'+id).className='nav-tab'+(v===id?' active':'');
   });
   if(v==='dashboard')renderDashboard();
   if(v==='tabla')renderTabla();
+  if(v==='agente')calcAgente();
+}
+
+// ── Vista Agente ──
+let agenteCob='is', agenteTieneSaas=false;
+function syncAgenteMa(fromSlider){
+  if(fromSlider){document.getElementById('agente-ma-text').value=document.getElementById('agente-ma-slider').value;}
+  else{let v=parseInt(document.getElementById('agente-ma-text').value)||1000;v=Math.max(1000,Math.min(999999,v));document.getElementById('agente-ma-slider').value=Math.min(v,400000);}
+  calcAgente();
+}
+function setAgenteCob(c){
+  agenteCob=c;
+  document.getElementById('agente-btn-is').className='cob-btn'+(c==='is'?' active-is':'');
+  document.getElementById('agente-btn-i').className='cob-btn'+(c==='i'?' active-i':'');
+  calcAgente();
+}
+function setAgenteSaaS(val){
+  agenteTieneSaas=val;
+  document.getElementById('agente-saas-si').className='cob-btn'+(val?' active-is':'');
+  document.getElementById('agente-saas-no').className='cob-btn'+(!val?' active-is':'');
+  calcAgente();
+}
+function calcAgente(){
+  const ma=parseFloat(document.getElementById('agente-ma-text').value)||100000;
+  const tasa=agenteCob==='is'?tasaIS:tasaI;
+  const com=0.14;
+  const mrrA=ma*tasa*com/12;
+  const costoSaaS=agenteTieneSaas?0:SAAS_MES;
+  const remEstable=mrrA-costoSaaS;
+  let semClass,dotClass,semMsg;
+  if(remEstable<0){semClass='sem-red';dotClass='sem-dot-red';semMsg='MRR insuficiente para cubrir costos';}
+  else if(remEstable<0.5){semClass='sem-yellow';dotClass='sem-dot-yellow';semMsg='Margen ajustado — considera revisar';}
+  else{semClass='sem-green';dotClass='sem-dot-green';semMsg='Operación rentable para la corredora';}
+  document.getElementById('agente-result').innerHTML=
+    `<div class="semaforo ${semClass}"><div class="sem-dot ${dotClass}"></div><div class="sem-text">${semMsg}</div><div class="sem-val" style="color:${remEstable>=0?'#0a9e72':'#d63228'}">${(remEstable>=0?'+':'')}${fmtUF(remEstable)} UF/mes</div></div>`+
+    `<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border,#dde0eb);">`+
+    `<div class="res-row"><span>MRR generado <span style="font-size:11px;color:var(--muted);">(comisión 14%)</span></span><span class="val">${fmtUF(mrrA)} UF/mes</span></div>`+
+    (costoSaaS>0
+      ?`<div class="res-row"><span>SaaS CF <span style="font-size:11px;color:var(--muted);">(intercompany)</span></span><span class="val red">−${fmtUF(costoSaaS)} UF/mes</span></div>`
+      :`<div class="res-row"><span>SaaS CF</span><span style="font-size:12px;color:var(--muted);">Ya incluido</span></div>`)+
+    `</div>`;
 }
 
 // ── Parámetros seguro ──
