@@ -298,3 +298,10 @@ input[type=number].no-spin{-moz-appearance:textfield;}
 .cn-note-preview.empty{color:var(--border-hover);font-size:18px;line-height:1;}
 .cn-note-input{width:120px;font-size:12px;padding:4px 6px;border:1px solid var(--accent);border-radius:6px;background:var(--surface);color:var(--text);resize:none;outline:none;font-family:'DM Sans',sans-serif;}
 
+/* ── Modo Agente: ocultar secciones internas post-resumen ── */
+#view-simulador.mode-agente #rent-section,
+#view-simulador.mode-agente .pdf-bar,
+#view-simulador.mode-agente #historial-wrap,
+#view-simulador.mode-agente #btn-historial,
+#view-simulador.mode-agente #btn-guardar{display:none!important;}
+
