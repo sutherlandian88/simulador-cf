@@ -66,8 +66,8 @@ function renderAgenteBBDD(){
     const diferencial=saasCost>0?mrrSeg/saasCost:0;
     const remanente=mrrSeg-saasCost;
     return{...r,cobr,mrrSeg,saasCost,diferencial,remanente};
-  }).filter(r=>r.diferencial>=3);
-  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidades con diferencial ≥ 3x';
+  }).filter(r=>r.diferencial>=2.7);
+  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidades con diferencial ≥ 2.7x';
   document.getElementById('agente-bbdd-export-btn').style.display=rows.length?'inline-flex':'none';
   window._agenteBBDDRows=rows;
   let html='';
@@ -122,7 +122,7 @@ function filterAgenteBBDD(){
   if(saas==='con')rows=rows.filter(r=>r.tieneSaas);
   if(saas==='sin')rows=rows.filter(r=>!r.tieneSaas);
   const saasLabel=saas==='con'?' · Con SaaS':saas==='sin'?' · Sin SaaS':'';
-  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidad'+(rows.length!==1?'es':'')+' con diferencial ≥ 3x'+(q?' · "'+q+'"':'')+saasLabel;
+  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidad'+(rows.length!==1?'es':'')+' con diferencial ≥ 2.7x'+(q?' · "'+q+'"':'')+saasLabel;
   let html='';
   rows.forEach(r=>{
     const difColor=r.diferencial>=3?'#0a9e72':r.diferencial>=1?'#BA7517':'#d63228';
