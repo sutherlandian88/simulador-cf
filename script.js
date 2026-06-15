@@ -473,7 +473,7 @@ function renderResumen(){
     (()=>{const dif=costoTotal>0?mrr/costoTotal:null;const ok=dif!==null&&dif>=umbralDiferencial;const col=dif===null?'#5570a0':ok?'#0a9e72':'#d63228';const difStr=dif!==null?fmtUF(dif,2)+'x':'—';const badge=dif===null?'—':ok?'✅ Rentable: Rinde '+difStr+' lo que cuesta el beneficio':'❌ No rentable: Rinde solo '+difStr+' lo que cuesta el beneficio';return`<div class="res-row" style="border-top:1px solid #eef0f8;margin-top:4px;padding-top:6px;"><span><strong>Diferencial</strong></span><span style="color:${col};font-size:13px;font-weight:600;text-align:right;">${badge}</span></div>`;})()+
     `<div class="res-row" style="border-top:1px solid #eef0f8;margin-top:4px;padding-top:6px;"><span><strong>Remanente neto (mes 1)</strong></span><span class="val ${remMes1>=0?'green':'red'}">${(remMes1>=0?'+':'')}${fmtUF(remMes1)} UF</span></div>`+
     `<div class="res-row"><span><strong>Remanente neto (mes 2+)</strong></span><span class="val ${remEstable>=0?'green':'red'}">${(remEstable>=0?'+':'')}${fmtUF(remEstable)} UF/mes</span></div>`+
-    `<div id="agente-comision-card"><div class="agente-com-box"><div class="agente-com-left"><div class="agente-com-label">Tu comisión al cerrar</div><div class="agente-com-value">${fmtUF(comAgente)} UF</div><div class="agente-com-sub">Cobro único — mes 1</div></div></div></div>`;
+    `<div id="agente-comision-card"><div class="agente-com-box"><div class="agente-com-left"><div class="agente-com-label">Tu comisión al cerrar</div><div class="agente-com-value">${fmtUF(comAgente)} UF</div></div></div></div>`;
   renderRentabilidad();
 }
 
