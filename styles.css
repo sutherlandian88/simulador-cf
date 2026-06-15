@@ -299,6 +299,7 @@ input[type=number].no-spin{-moz-appearance:textfield;}
 .cn-note-input{width:120px;font-size:12px;padding:4px 6px;border:1px solid var(--accent);border-radius:6px;background:var(--surface);color:var(--text);resize:none;outline:none;font-family:'DM Sans',sans-serif;}
 
 /* ── Modo Agente: ocultar secciones internas post-resumen ── */
+#view-simulador.mode-agente #umbral-block,
 #view-simulador.mode-agente #rent-section,
 #view-simulador.mode-agente .pdf-bar,
 #view-simulador.mode-agente #historial-wrap,
