@@ -309,4 +309,18 @@ input[type=number].no-spin{-moz-appearance:textfield;}
 #view-simulador.mode-agente #resumen-content .sem-val{display:none!important;}
 #agente-bbdd-section{display:none;}
 #view-simulador.mode-agente #agente-bbdd-section{display:block!important;}
+#agente-comision-card{display:none;}
+#view-simulador.mode-agente #agente-comision-card{display:block;}
+.agente-com-box{background:linear-gradient(135deg,#1a5ac408 0%,#0a9e7210 100%);border:1.5px solid #1a5ac430;border-radius:14px;padding:16px 20px;margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.agente-com-left{display:flex;flex-direction:column;gap:2px;}
+.agente-com-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.agente-com-value{font-size:22px;font-weight:800;color:#1a5ac4;letter-spacing:-.5px;}
+.agente-com-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.btn-copiar{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1.5px solid var(--primary,#1a5ac4);background:transparent;color:var(--primary,#1a5ac4);font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;}
+.btn-copiar:hover{background:var(--primary,#1a5ac4);color:#fff;}
+.btn-copiar.copiado{background:#0a9e72;border-color:#0a9e72;color:#fff;}
+.th-sort{cursor:pointer;user-select:none;white-space:nowrap;}
+.th-sort:hover{color:var(--primary,#1a5ac4);}
+.sort-icon{display:inline-block;margin-left:4px;opacity:.4;font-size:10px;}
+.sort-icon.active{opacity:1;color:var(--primary,#1a5ac4);}
 

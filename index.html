@@ -212,9 +212,16 @@
       <div class="cn-table-wrap">
         <table class="cn-table">
           <thead>
-            <tr>
-              <th>Comunidad</th><th>RUT</th><th>Estado seguro</th><th>Cobertura</th>
-              <th>MA (UF)</th><th>MRR seguro</th><th>¿Tiene SaaS?</th><th>Ratio MRR/SaaS</th><th>Remanente corredora</th>
+            <tr id="agente-bbdd-thead-row">
+              <th class="th-sort" onclick="sortAgenteBBDD('nombre')">Comunidad<span class="sort-icon" id="si-nombre">↕</span></th>
+              <th>RUT</th>
+              <th class="th-sort" onclick="sortAgenteBBDD('estadoSeguro')">Estado seguro<span class="sort-icon" id="si-estadoSeguro">↕</span></th>
+              <th>Cobertura</th>
+              <th class="th-sort" onclick="sortAgenteBBDD('ma')">MA (UF)<span class="sort-icon" id="si-ma">↕</span></th>
+              <th class="th-sort" onclick="sortAgenteBBDD('mrrSeg')">MRR seguro<span class="sort-icon" id="si-mrrSeg">↕</span></th>
+              <th class="th-sort" onclick="sortAgenteBBDD('tieneSaas')">¿Tiene SaaS?<span class="sort-icon" id="si-tieneSaas">↕</span></th>
+              <th class="th-sort" onclick="sortAgenteBBDD('diferencial')">Ratio MRR/SaaS<span class="sort-icon" id="si-diferencial" style="opacity:1;color:var(--primary,#1a5ac4);">↓</span></th>
+              <th class="th-sort" onclick="sortAgenteBBDD('remanente')">Remanente corredora<span class="sort-icon" id="si-remanente">↕</span></th>
             </tr>
           </thead>
           <tbody id="agente-bbdd-tbody"></tbody>

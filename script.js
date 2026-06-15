@@ -67,28 +67,25 @@ function renderAgenteBBDD(){
     const remanente=mrrSeg-saasCost;
     return{...r,cobr,mrrSeg,saasCost,diferencial,remanente};
   }).filter(r=>r.diferencial>=2.7);
-  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidades con diferencial ≥ 2.7x';
   document.getElementById('agente-bbdd-export-btn').style.display=rows.length?'inline-flex':'none';
   window._agenteBBDDRows=rows;
-  let html='';
-  rows.forEach(r=>{
-    const difColor=r.diferencial>=3?'#0a9e72':r.diferencial>=1?'#BA7517':'#d63228';
-    html+=`<tr>
-      <td>${esc(r.nombre||'')}</td>
-      <td style="font-size:11px;color:var(--muted);">${esc(r.rut||'—')}</td>
-      <td><span class="estado-badge estado-${r.estadoSeguro||'nunca'}">${r.estadoSeguro||'nunca'}</span></td>
-      <td><span class="cn-badge ${r.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${r.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>
-      <td style="text-align:right;">${r.ma>0?r.ma.toLocaleString('es-CL')+' UF':'—'}</td>
-      <td style="text-align:right;color:#1a5ac4;font-weight:500;">${r.mrrSeg>0?fmtUF(r.mrrSeg)+' UF':'—'}</td>
-      <td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:${r.tieneSaas?'#0a9e7218':'#d6322818'};color:${r.tieneSaas?'#0a9e72':'#d63228'};">${r.tieneSaas?'Sí':'No'}</span></td>
-      <td style="text-align:right;color:${difColor};font-weight:600;">${r.diferencial.toFixed(2)}x</td>
-      <td style="text-align:right;font-weight:500;color:${r.remanente>=0?'#0a9e72':'#d63228'};">${(r.remanente>=0?'+':'')+fmtUF(r.remanente)} UF</td>
-    </tr>`;
-  });
-  document.getElementById('agente-bbdd-tbody').innerHTML=html;
+  filterAgenteBBDD();
 }
 
 window._agenteSaasFilter='all';
+window._agenteBBDDSort={col:'diferencial',dir:'desc'};
+
+function sortAgenteBBDD(col){
+  const s=window._agenteBBDDSort;
+  if(s.col===col) s.dir=s.dir==='desc'?'asc':'desc';
+  else{s.col=col;s.dir=(col==='nombre'||col==='estadoSeguro')?'asc':'desc';}
+  ['nombre','estadoSeguro','ma','mrrSeg','tieneSaas','diferencial','remanente'].forEach(k=>{
+    const el=document.getElementById('si-'+k);if(!el)return;
+    if(k===col){el.textContent=s.dir==='desc'?'↓':'↑';el.className='sort-icon active';}
+    else{el.textContent='↕';el.className='sort-icon';}
+  });
+  filterAgenteBBDD();
+}
 
 function setAgenteSaasFilter(val){
   window._agenteSaasFilter=val;
@@ -121,6 +118,15 @@ function filterAgenteBBDD(){
   }):all;
   if(saas==='con')rows=rows.filter(r=>r.tieneSaas);
   if(saas==='sin')rows=rows.filter(r=>!r.tieneSaas);
+  const {col:sc,dir:sd}=window._agenteBBDDSort||{col:'diferencial',dir:'desc'};
+  rows.sort((a,b)=>{
+    let va=a[sc],vb=b[sc];
+    if(typeof va==='boolean')va=va?1:0;
+    if(typeof vb==='boolean')vb=vb?1:0;
+    if(typeof va==='string')va=norm(va);
+    if(typeof vb==='string')vb=norm(vb);
+    return sd==='desc'?(vb>va?1:vb<va?-1:0):(va>vb?1:va<vb?-1:0);
+  });
   const saasLabel=saas==='con'?' · Con SaaS':saas==='sin'?' · Sin SaaS':'';
   document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidad'+(rows.length!==1?'es':'')+' con diferencial ≥ 2.7x'+(q?' · "'+q+'"':'')+saasLabel;
   let html='';
@@ -139,6 +145,32 @@ function filterAgenteBBDD(){
     </tr>`;
   });
   document.getElementById('agente-bbdd-tbody').innerHTML=html;
+}
+
+function copiarResumenAgente(){
+  const nombre=(document.getElementById('nombre-comunidad')?.value||'').trim()||'Comunidad sin nombre';
+  const comAg=getComisionAgente(mrr);
+  const costoTotal=(sel.saas?SAAS_MES:0)+(sel.cito?costoCitoMes:0)+(sel.acceso?ACCESO_MES:0);
+  const remEstable=mrr-costoTotal;
+  const dif=costoTotal>0?(mrr/costoTotal).toFixed(2)+'x':'—';
+  const estado=remEstable>=0.5?'✅ Operación rentable para la corredora':remEstable>=0?'⚠️ Margen ajustado':' No rentable';
+  const beneficios=[sel.saas&&'SaaS',sel.cito&&'Citofonía',sel.acceso&&'Control de acceso'].filter(Boolean).join(', ')||'—';
+  const texto=[
+    `🏢 *${nombre}*`,
+    ``,
+    `📊 MRR seguro: *${fmtUF(mrr)} UF/mes*`,
+    `💡 Diferencial: *${dif}*`,
+    `${estado}`,
+    ``,
+    `📦 Beneficios seleccionados: ${beneficios}`,
+    `💰 Tu comisión al cerrar: *${fmtUF(comAg)} UF*`,
+  ].join('\n');
+  navigator.clipboard.writeText(texto).then(()=>{
+    const btn=document.getElementById('btn-copiar-agente');
+    if(!btn)return;
+    btn.textContent='✅ ¡Copiado!';btn.classList.add('copiado');
+    setTimeout(()=>{btn.textContent='📋 Copiar para WhatsApp';btn.classList.remove('copiado');},2000);
+  }).catch(()=>alert(texto));
 }
 
 function clearAgenteBBDDSearch(){
@@ -440,7 +472,8 @@ function renderResumen(){
     `<div class="res-row"><span>Costo total beneficios</span><span class="val red">−${fmtUF(costoTotal)} UF/mes</span></div>`+
     (()=>{const dif=costoTotal>0?mrr/costoTotal:null;const ok=dif!==null&&dif>=umbralDiferencial;const col=dif===null?'#5570a0':ok?'#0a9e72':'#d63228';const difStr=dif!==null?fmtUF(dif,2)+'x':'—';const badge=dif===null?'—':ok?'✅ Rentable: Rinde '+difStr+' lo que cuesta el beneficio':'❌ No rentable: Rinde solo '+difStr+' lo que cuesta el beneficio';return`<div class="res-row" style="border-top:1px solid #eef0f8;margin-top:4px;padding-top:6px;"><span><strong>Diferencial</strong></span><span style="color:${col};font-size:13px;font-weight:600;text-align:right;">${badge}</span></div>`;})()+
     `<div class="res-row" style="border-top:1px solid #eef0f8;margin-top:4px;padding-top:6px;"><span><strong>Remanente neto (mes 1)</strong></span><span class="val ${remMes1>=0?'green':'red'}">${(remMes1>=0?'+':'')}${fmtUF(remMes1)} UF</span></div>`+
-    `<div class="res-row"><span><strong>Remanente neto (mes 2+)</strong></span><span class="val ${remEstable>=0?'green':'red'}">${(remEstable>=0?'+':'')}${fmtUF(remEstable)} UF/mes</span></div>`;
+    `<div class="res-row"><span><strong>Remanente neto (mes 2+)</strong></span><span class="val ${remEstable>=0?'green':'red'}">${(remEstable>=0?'+':'')}${fmtUF(remEstable)} UF/mes</span></div>`+
+    `<div id="agente-comision-card"><div class="agente-com-box"><div class="agente-com-left"><div class="agente-com-label">Tu comisión al cerrar</div><div class="agente-com-value">${fmtUF(comAgente)} UF</div><div class="agente-com-sub">Cobro único — mes 1</div></div><button class="btn-copiar" id="btn-copiar-agente" onclick="copiarResumenAgente()">📋 Copiar para WhatsApp</button></div></div>`;
   renderRentabilidad();
 }
 
