@@ -204,7 +204,7 @@ function fillFromBBDD(i){
   const rutEl=document.getElementById('rut-comunidad');
   if(nomEl)nomEl.value=r.nombre||'';
   if(rutEl)rutEl.value=formatRUT(r.rut||'');
-  const maVal=Math.min(Math.max(r.ma||100000,1000),999999);
+  const maVal=Math.min(Math.max(r.ma||100000,1000),1900000);
   const maSlider=document.getElementById('ma');
   const maText=document.getElementById('ma-text');
   if(maSlider)maSlider.value=Math.min(maVal,400000);
@@ -262,7 +262,7 @@ function onAseguradoraChange(){
   updateTasa();
 }
 function syncMaFromSlider(){document.getElementById('ma-text').value=document.getElementById('ma').value;recalc();}
-function syncMaFromText(){let v=parseInt(document.getElementById('ma-text').value)||1000;v=Math.max(1000,Math.min(999999,v));document.getElementById('ma').value=Math.min(v,400000);recalc();}
+function syncMaFromText(){let v=parseInt(document.getElementById('ma-text').value)||1000;v=Math.max(1000,Math.min(999999,v));document.getElementById('ma').value=Math.min(v,1900000);recalc();}
 function syncUnitsFromSlider(){document.getElementById('units-text').value=document.getElementById('units').value;recalc();}
 function syncUnitsFromText(){let v=parseInt(document.getElementById('units-text').value)||1;v=Math.max(1,Math.min(9999,v));document.getElementById('units').value=Math.min(v,1000);recalc();}
 function toggleProducto(p){tiene[p]=!tiene[p];document.getElementById('tog-'+p).className=tiene[p]?'prod-toggle on-'+p:'prod-toggle';const msgs=[];if(tiene.saas)msgs.push('SaaS excluido de beneficios.');if(tiene.cito)msgs.push('Citofonía excluida de beneficios.');if(tiene.acceso)msgs.push('Control de acceso excluido de beneficios.');const note=document.getElementById('prod-note');note.textContent=msgs.join(' ');note.className=msgs.length?'productos-note visible':'productos-note';recalc();}
