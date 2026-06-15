@@ -1064,6 +1064,7 @@ function renderBBDD(){
 
   const pct=totalSeg>0?Math.round((totalSaaS/totalSeg)*100):0;
   document.getElementById('bbdd-nota').innerHTML=`El SaaS representa el <strong>${pct}%</strong> del MRR de seguros — el modelo <strong style="color:${totalNet>=0?'#0a9e72':'#d63228'}">${totalNet>=0?'cierra positivo':'no cierra aún'}</strong>. Remanente mensual: <strong style="color:${totalNet>=0?'#0a9e72':'#d63228'}">${(totalNet>=0?'+':'')+fmtUF(totalNet)} UF/mes</strong> · ARR neto con churn ${churnPct}%: <strong style="color:${arrNetChurn>=0?'#0a9e72':'#d63228'}">${(arrNetChurn>=0?'+':'')+fmtUF(arrNetChurn)} UF/año</strong> · <strong>${fmtCLP(arrNetChurn)}/año</strong> · <strong>${fmtUSD(arrNetChurn)}/año</strong>.`;
+  renderAgenteBBDD();
 }
 
 recalc();
