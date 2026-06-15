@@ -306,4 +306,6 @@ input[type=number].no-spin{-moz-appearance:textfield;}
 #view-simulador.mode-agente #btn-guardar,
 #view-simulador.mode-agente #resumen-content .res-row,
 #view-simulador.mode-agente #resumen-content .sem-val{display:none!important;}
+#agente-bbdd-section{display:none;}
+#view-simulador.mode-agente #agente-bbdd-section{display:block!important;}
 

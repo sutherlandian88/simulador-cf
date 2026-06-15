@@ -188,6 +188,29 @@
       <div id="resumen-content"><div class="empty">Selecciona al menos un beneficio para ver el resumen</div></div>
     </div>
 
+    <!-- Solo visible en modo Agente -->
+    <div id="agente-bbdd-section" style="display:none;margin-top:2rem;">
+      <div class="divider" style="margin:0 0 1.5rem;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="s-label" style="margin-bottom:2px;">Base de datos — Rentabilidad ≥ 3x</div>
+          <div style="font-size:12px;color:var(--muted);" id="agente-bbdd-count"></div>
+        </div>
+        <button onclick="exportAgenteBBDD()" id="agente-bbdd-export-btn" style="display:none;padding:7px 16px;background:var(--primary,#1a5ac4);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;align-items:center;gap:6px;">⬇ Exportar Excel</button>
+      </div>
+      <div class="cn-table-wrap">
+        <table class="cn-table">
+          <thead>
+            <tr>
+              <th>Comunidad</th><th>RUT</th><th>Estado seguro</th><th>Cobertura</th>
+              <th>MA (UF)</th><th>MRR seguro</th><th>¿Tiene SaaS?</th><th>Ratio MRR/SaaS</th><th>Remanente corredora</th>
+            </tr>
+          </thead>
+          <tbody id="agente-bbdd-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="rent-section" style="display:none;" class="rent-section">
       <div class="divider" style="margin:2rem 0;"></div>
       <div class="rent-header"><div class="s-label">Rentabilidad para la corredora</div><div class="rent-sub">Análisis de recuperación de inversión y margen neto</div></div>

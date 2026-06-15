@@ -47,6 +47,58 @@ function setView(v){
   else simEl.classList.remove('mode-agente');
   if(v==='dashboard')renderDashboard();
   if(v==='tabla')renderTabla();
+  if(v==='agente')renderAgenteBBDD();
+}
+
+function renderAgenteBBDD(){
+  if(!bbddComunidades||bbddComunidades.length===0){
+    document.getElementById('agente-bbdd-count').textContent='Sin datos — ve a Análisis de BBDD y carga el archivo primero.';
+    document.getElementById('agente-bbdd-export-btn').style.display='none';
+    document.getElementById('agente-bbdd-tbody').innerHTML='';
+    return;
+  }
+  const com=parseFloat(document.getElementById('bbdd-comision').value)/100;
+  const rows=bbddComunidades.map(r=>{
+    const cobr=r.cob||bbddCob;
+    const tasa=cobr==='is'?bbddTasaIS:bbddTasaI;
+    const mrrSeg=r.ma>0?r.ma*tasa*com/12:0;
+    const saasCost=r.tieneSaas?r.precioLista:bbddDefaultIntercompany;
+    const diferencial=saasCost>0?mrrSeg/saasCost:0;
+    const remanente=mrrSeg-saasCost;
+    return{...r,cobr,mrrSeg,saasCost,diferencial,remanente};
+  }).filter(r=>r.diferencial>=3);
+  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidades con diferencial ≥ 3x';
+  document.getElementById('agente-bbdd-export-btn').style.display=rows.length?'inline-flex':'none';
+  window._agenteBBDDRows=rows;
+  let html='';
+  rows.forEach(r=>{
+    const difColor=r.diferencial>=3?'#0a9e72':r.diferencial>=1?'#BA7517':'#d63228';
+    html+=`<tr>
+      <td>${esc(r.nombre||'')}</td>
+      <td style="font-size:11px;color:var(--muted);">${esc(r.rut||'—')}</td>
+      <td><span class="estado-badge estado-${r.estadoSeguro||'nunca'}">${r.estadoSeguro||'nunca'}</span></td>
+      <td><span class="cn-badge ${r.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${r.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>
+      <td style="text-align:right;">${r.ma>0?r.ma.toLocaleString('es-CL')+' UF':'—'}</td>
+      <td style="text-align:right;color:#1a5ac4;font-weight:500;">${r.mrrSeg>0?fmtUF(r.mrrSeg)+' UF':'—'}</td>
+      <td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:${r.tieneSaas?'#0a9e7218':'#d6322818'};color:${r.tieneSaas?'#0a9e72':'#d63228'};">${r.tieneSaas?'Sí':'No'}</span></td>
+      <td style="text-align:right;color:${difColor};font-weight:600;">${r.diferencial.toFixed(2)}x</td>
+      <td style="text-align:right;font-weight:500;color:${r.remanente>=0?'#0a9e72':'#d63228'};">${(r.remanente>=0?'+':'')+fmtUF(r.remanente)} UF</td>
+    </tr>`;
+  });
+  document.getElementById('agente-bbdd-tbody').innerHTML=html;
+}
+
+function exportAgenteBBDD(){
+  const rows=window._agenteBBDDRows||[];
+  if(!rows.length)return;
+  const wsData=[['Comunidad','RUT','Estado seguro','Cobertura','MA (UF)','MRR seguro (UF)','¿Tiene SaaS?','Ratio MRR/SaaS','Remanente corredora (UF)']];
+  rows.forEach(r=>{
+    wsData.push([r.nombre||'',r.rut||'',r.estadoSeguro||'',r.cobr==='is'?'Inc.+Sismo':'Incendio',r.ma||0,+r.mrrSeg.toFixed(2),r.tieneSaas?'Sí':'No',+r.diferencial.toFixed(4),+r.remanente.toFixed(2)]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  const wb_exp=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb_exp,'Agente 3x',ws);
+  XLSX.writeFile(wb_exp,'bbdd_agente_3x.xlsx');
 }
 
 // ── Parámetros seguro ──
