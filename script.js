@@ -1068,6 +1068,7 @@ function renderBBDD(){
 }
 
 recalc();
+setView('agente');
 
 // ── Tabla de Rentabilidad ──
 let tablaSelectedThreshold=2.0;
