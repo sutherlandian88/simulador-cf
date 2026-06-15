@@ -198,9 +198,16 @@
         </div>
         <button onclick="exportAgenteBBDD()" id="agente-bbdd-export-btn" style="display:none;padding:7px 16px;background:var(--primary,#1a5ac4);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;align-items:center;gap:6px;">⬇ Exportar Excel</button>
       </div>
-      <div style="position:relative;margin-bottom:1rem;">
-        <input type="text" id="agente-bbdd-search" placeholder="Buscar por nombre o RUT…" oninput="filterAgenteBBDD()" style="width:100%;padding:9px 36px 9px 14px;border:1.5px solid var(--border,#dde0eb);border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);outline:none;">
-        <span id="agente-bbdd-search-clear" onclick="clearAgenteBBDDSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;color:var(--muted);">×</span>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
+        <div style="position:relative;flex:1;min-width:180px;">
+          <input type="text" id="agente-bbdd-search" placeholder="Buscar por nombre o RUT…" oninput="filterAgenteBBDD()" style="width:100%;padding:9px 36px 9px 14px;border:1.5px solid var(--border,#dde0eb);border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;">
+          <span id="agente-bbdd-search-clear" onclick="clearAgenteBBDDSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;color:var(--muted);">×</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button id="saas-btn-all" onclick="setAgenteSaasFilter('all')" style="padding:7px 14px;border-radius:100px;border:1.5px solid var(--primary,#1a5ac4);background:var(--primary,#1a5ac4);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;">Todos</button>
+          <button id="saas-btn-con" onclick="setAgenteSaasFilter('con')" style="padding:7px 14px;border-radius:100px;border:1.5px solid var(--border,#dde0eb);background:var(--surface);color:var(--muted,#888);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;">Con SaaS</button>
+          <button id="saas-btn-sin" onclick="setAgenteSaasFilter('sin')" style="padding:7px 14px;border-radius:100px;border:1.5px solid var(--border,#dde0eb);background:var(--surface);color:var(--muted,#888);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;">Sin SaaS</button>
+        </div>
       </div>
       <div class="cn-table-wrap">
         <table class="cn-table">

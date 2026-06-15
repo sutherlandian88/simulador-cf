@@ -88,18 +88,41 @@ function renderAgenteBBDD(){
   document.getElementById('agente-bbdd-tbody').innerHTML=html;
 }
 
+window._agenteSaasFilter='all';
+
+function setAgenteSaasFilter(val){
+  window._agenteSaasFilter=val;
+  const cfg={
+    all:{bg:'var(--primary,#1a5ac4)',color:'#fff',border:'var(--primary,#1a5ac4)'},
+    con:{bg:'#0a9e7220',color:'#0a9e72',border:'#0a9e72'},
+    sin:{bg:'#d6322815',color:'#d63228',border:'#d63228'},
+  };
+  const off={bg:'var(--surface)',color:'var(--muted,#888)',border:'var(--border,#dde0eb)'};
+  ['all','con','sin'].forEach(k=>{
+    const btn=document.getElementById('saas-btn-'+k);
+    if(!btn)return;
+    const s=k===val?cfg[k]:off;
+    btn.style.background=s.bg;btn.style.color=s.color;btn.style.borderColor=s.border;
+  });
+  filterAgenteBBDD();
+}
+
 function filterAgenteBBDD(){
   const q=(document.getElementById('agente-bbdd-search').value||'').trim().toLowerCase();
   const clr=document.getElementById('agente-bbdd-search-clear');
   if(clr)clr.style.display=q?'block':'none';
+  const saas=window._agenteSaasFilter||'all';
   const all=window._agenteBBDDRows||[];
-  const rows=q?all.filter(r=>{
+  let rows=q?all.filter(r=>{
     if(norm(r.nombre||'').includes(q))return true;
     const digits=q.replace(/[^0-9]/g,'');
     if(digits&&String(r.rut||'').replace(/[^0-9]/g,'').includes(digits))return true;
     return false;
   }):all;
-  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidad'+(rows.length!==1?'es':'')+' con diferencial ≥ 3x'+(q?' · "'+q+'"':'');
+  if(saas==='con')rows=rows.filter(r=>r.tieneSaas);
+  if(saas==='sin')rows=rows.filter(r=>!r.tieneSaas);
+  const saasLabel=saas==='con'?' · Con SaaS':saas==='sin'?' · Sin SaaS':'';
+  document.getElementById('agente-bbdd-count').textContent=rows.length.toLocaleString('es-CL')+' comunidad'+(rows.length!==1?'es':'')+' con diferencial ≥ 3x'+(q?' · "'+q+'"':'')+saasLabel;
   let html='';
   rows.forEach(r=>{
     const difColor=r.diferencial>=3?'#0a9e72':r.diferencial>=1?'#BA7517':'#d63228';
@@ -110,7 +133,7 @@ function filterAgenteBBDD(){
       <td><span class="cn-badge ${r.cobr==='is'?'cn-badge-is':'cn-badge-i'}">${r.cobr==='is'?'Inc.+Sismo':'Incendio'}</span></td>
       <td style="text-align:right;">${r.ma>0?r.ma.toLocaleString('es-CL')+' UF':'—'}</td>
       <td style="text-align:right;color:#1a5ac4;font-weight:500;">${r.mrrSeg>0?fmtUF(r.mrrSeg)+' UF':'—'}</td>
-      <td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:${r.tieneSaas?'#0a9e7218':'#d6322818'};color:${r.tieneSaas?'#0a9e72':'#d63228'};">${r.tieneSaas?'Sí':'No'}</span></td>
+      <td style="text-align:center;"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:${r.tieneSaas?'#0a9e7220':'#d6322815'};color:${r.tieneSaas?'#0a9e72':'#d63228'};">${r.tieneSaas?'Sí':'No'}</span></td>
       <td style="text-align:right;color:${difColor};font-weight:600;">${r.diferencial.toFixed(2)}x</td>
       <td style="text-align:right;font-weight:500;color:${r.remanente>=0?'#0a9e72':'#d63228'};">${(r.remanente>=0?'+':'')+fmtUF(r.remanente)} UF</td>
     </tr>`;
