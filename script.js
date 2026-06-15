@@ -180,13 +180,30 @@ function clearAgenteBBDDSearch(){
   filterAgenteBBDD();
 }
 
+function formatRUT(val){
+  val=String(val||'').replace(/\./g,'').replace(/-/g,'').toUpperCase().trim();
+  if(val.length<2)return val;
+  const dv=val.slice(-1);
+  const body=val.slice(0,-1).replace(/[^0-9]/g,'');
+  if(!body)return val;
+  const dotted=body.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return dotted+'-'+dv;
+}
+function onRutInput(el){
+  const pos=el.selectionStart,raw=el.value;
+  el.value=formatRUT(raw);
+  // restore cursor roughly
+  const diff=el.value.length-raw.length;
+  try{el.setSelectionRange(pos+diff,pos+diff);}catch(e){}
+}
+
 function fillFromBBDD(i){
   const r=(window._agenteBBDDFiltered||[])[i];
   if(!r)return;
   const nomEl=document.getElementById('nombre-comunidad');
   const rutEl=document.getElementById('rut-comunidad');
   if(nomEl)nomEl.value=r.nombre||'';
-  if(rutEl)rutEl.value=r.rut||'';
+  if(rutEl)rutEl.value=formatRUT(r.rut||'');
   const maVal=Math.min(Math.max(r.ma||100000,1000),999999);
   const maSlider=document.getElementById('ma');
   const maText=document.getElementById('ma-text');
