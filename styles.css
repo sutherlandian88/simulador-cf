@@ -308,6 +308,9 @@ input[type=number].no-spin{-moz-appearance:textfield;}
 #view-simulador.mode-agente #btn-guardar,
 #view-simulador.mode-agente #resumen-content .res-row,
 #view-simulador.mode-agente #resumen-content .sem-val{display:none!important;}
+/* ── Modo solo-agente (?agente en URL) ── */
+body.solo-agente .nav-tabs{display:none;}
+body.solo-agente h1,body.solo-agente .site-title{display:none;}
 #agente-bbdd-section{display:none;}
 #view-simulador.mode-agente #agente-bbdd-section{display:block!important;}
 #agente-comision-card{display:none;}

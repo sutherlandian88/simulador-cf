@@ -1202,6 +1202,14 @@ function renderBBDD(){
 recalc();
 setView('agente');
 
+// ── Modo solo-agente (?agente en URL) ──
+if(new URLSearchParams(location.search).has('agente')){
+  document.body.classList.add('solo-agente');
+  // Bloquear navegación a otras vistas
+  const _setView=setView;
+  window.setView=function(v){_setView(v==='agente'||v==='simulador'?'agente':v);};
+}
+
 // ── Tabla de Rentabilidad ──
 let tablaSelectedThreshold=2.0;
 let tablaSubExpanded=false;
